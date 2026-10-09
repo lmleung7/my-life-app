@@ -205,7 +205,10 @@ body[data-view="receipts"] { --fg: var(--text); --panel: var(--card); }
 body[data-view="stmts"] { --fg: var(--ink); --panel: var(--surface); }
 .topnav { max-width: 1000px; margin: 0 auto; padding: 12px 16px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .tabs { display: flex; gap: 6px; }
-.tab { padding: 7px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); text-decoration: none; font-size: .9375rem; }
+.tab { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; box-sizing: border-box; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); text-decoration: none; }
+.tab[hidden] { display: none; }
+.tab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.tab:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
 .tab[aria-current="page"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .navacct { display: flex; align-items: center; gap: 10px; min-width: 0; color: var(--muted); font-size: .875rem; }
 .navemail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -218,8 +221,12 @@ body[data-view="stmts"] { --fg: var(--ink); --panel: var(--surface); }
 <body data-view="receipts">
 <div class="topnav" id="topnav" hidden>
   <nav class="tabs" aria-label="Sections">
-    <a id="tab-receipts" class="tab" href="#/receipts">Receipts</a>
-    <a id="tab-stmts" class="tab" href="#/st" hidden>Statements</a>
+    <a id="tab-receipts" class="tab" href="#/receipts" aria-label="Receipts" title="Receipts">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v18"/><path d="M16.5 7.5C15.8 6.4 14.2 5.8 12 5.8c-2.6 0-4.1 1.1-4.1 2.8 0 4.2 8.2 1.9 8.2 6.1 0 1.7-1.6 3.3-4.1 3.3-2.3 0-4.1-.8-5-2.1"/></svg>
+    </a>
+    <a id="tab-stmts" class="tab" href="#/st" aria-label="Statements" title="Statements" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 9.5l9-5.5 9 5.5z"/><path d="M5.5 12.5v5M9.5 12.5v5M14.5 12.5v5M18.5 12.5v5"/><path d="M3.5 20.5h17"/></svg>
+    </a>
   </nav>
   <div class="navacct">
     <span id="who" class="navemail"></span>
