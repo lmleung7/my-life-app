@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Receipts</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* ===== Receipts (scoped to #receipts) ===== */
+body[data-view="receipts"]{ --bg:#f6f7f9; --card:#fff; --text:#1a1d21; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; }
+@media (prefers-color-scheme: dark){body[data-view="receipts"]{ --bg:#111418; --card:#1b1f25; --text:#e8eaed; --muted:#9aa3af; --line:#2c323a; --accent:#6ea0ff; }}
+body[data-view="receipts"]{ margin:0; font:15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--text); }
+#receipts main{ max-width:820px; margin:0 auto; padding:16px; }
+#receipts header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+#receipts h1{ font-size:20px; margin:0; }
+#receipts button{ font:inherit; padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--text); cursor:pointer; }
+#receipts button.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+#receipts .muted{ color:var(--muted); font-size:13px; }
+#receipts .center{ text-align:center; padding:56px 16px; }
+#receipts .filters{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+#receipts .filters input,#receipts .filters select{ font:inherit; padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--text); }
+#receipts .filters input{ flex:1; min-width:160px; }
+#receipts .stats{ display:flex; gap:8px; margin-bottom:12px; }
+#receipts .stat{ flex:1; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+#receipts .stat b{ display:block; font-size:18px; font-variant-numeric:tabular-nums; }
+#receipts details{ background:var(--card); border:1px solid var(--line); border-radius:10px; margin-bottom:8px; }
+#receipts summary{ display:flex; gap:10px; align-items:baseline; padding:10px 12px; cursor:pointer; list-style:none; }
+#receipts summary::-webkit-details-marker{ display:none; }
+#receipts .date{ color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap; }
+#receipts .shop{ flex:1; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#receipts .amt{ font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap; }
+#receipts .body{ padding:0 12px 12px; border-top:1px solid var(--line); min-width:0; }
+#receipts details{ overflow:hidden; }
+#receipts table{ width:100%; border-collapse:collapse; margin-top:8px; font-size:14px; }
+#receipts td{ padding:4px 0; vertical-align:top; }
+#receipts td.n{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; padding-left:10px; }
+#receipts pre{ margin:8px 0 0; padding:10px; background:var(--bg); border-radius:8px; font:12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-x:auto; white-space:pre; }
+#receipts .chartcard{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:12px; }
+#receipts .chart{ display:flex; align-items:flex-end; gap:4px; height:150px; margin-top:6px; }
+#receipts .col{ flex:1; min-width:0; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:3px; padding:0; border:0; border-radius:6px; background:none; }
+#receipts .col .val{ font-size:10px; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap; }
+#receipts .col .bar{ width:100%; max-width:40px; min-height:2px; background:var(--accent); border-radius:4px 4px 0 0; }
+#receipts .col .lab{ font-size:11px; color:var(--muted); }
+#receipts .chart.picked .col:not(.on) .bar{ opacity:.35; }
+#receipts .col.on .lab,#receipts .col.on .val{ color:var(--text); font-weight:600; }
+#receipts .jsonlink{ display:inline-block; margin-top:8px; font-size:13px; color:var(--accent); }
+#receipts #more{ display:block; width:100%; margin:4px 0 24px; }
+body[data-view="receipts"] { --fg: var(--text); --panel: var(--card); }
+</style>
+</head>
+<body data-view="receipts">
+<div class="topnav" id="topnav" hidden>
+  <nav class="tabs" aria-label="Sections">
+    <a class="tab" href="./" aria-label="Home" title="Home">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg>
+    </a>
+  </nav>
+  <div class="navacct">
+    <span id="who" class="navemail"></span>
+    <button id="signout" class="so">Sign out</button>
+  </div>
+</div>
+
+<div id="receipts">
+<main>
+  <section id="message" class="center muted" hidden></section>
+
+  <section id="app" hidden>
+    <div class="filters">
+      <input id="q" type="search" placeholder="Search shop or item">
+      <select id="month"></select>
+    </div>
+    <div class="chartcard">
+      <span class="muted">Spending, last 12 months (tap a bar to filter)</span>
+      <div id="chart" class="chart" role="group" aria-label="Monthly spending, last 12 months"></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="muted">Receipts</span><b id="count">0</b></div>
+      <div class="stat"><span class="muted">Total spent</span><b id="total">£0.00</b></div>
+    </div>
+    <div id="list"></div>
+    <button id="more" hidden>Load more</button>
+  </section>
+</main>
+</div>
+
+<script src="shared.js"></script>
+<script>
+/* ================= Receipts ================= */
+const Receipts = (() => {
+// Public values only. NEVER put the service_role key in this file.
+const $ = id => document.getElementById(id);
+const show = (id, on) => { $(id).hidden = !on; };
+const el = (tag, cls, text) => {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;   // textContent only: receipt text is never treated as HTML
+  return e;
+};
+const num = v => (typeof v === 'number' && isFinite(v)) ? v : (parseFloat(v) || 0);
+const money = (v, cur) => {
+  try { return new Intl.NumberFormat('en-GB', { style:'currency', currency: cur || 'GBP' }).format(num(v)); }
+  catch { return (cur || '') + ' ' + num(v).toFixed(2); }
+};
+
+const PAGE = 10;
+let receipts = [];
+let shown = PAGE;
+
+$('q').oninput = () => { shown = PAGE; render(); };
+$('month').onchange = () => { shown = PAGE; render(); };
+$('more').onclick = () => { shown += PAGE; render(); };
+
+let loaded = false;
+async function open() {
+  if (loaded) return;
+  if (DEMO) return say('Demo mode: receipts are not loaded.');
+  say('Loading\u2026');
+  try {
+    receipts = await loadAll();
+  } catch (e) {
+    return say('Could not load receipts: ' + (e.message || e));
+  }
+  if (!receipts.length) return say('This Google account is not on the family list.');
+  loaded = true;
+  show('message', false);
+  buildMonths();
+  shown = PAGE;
+  show('app', true);
+  render();
+}
+
+function say(text) { $('message').textContent = text; show('message', true); }
+
+async function loadAll() {
+  const out = [], page = 1000;
+  for (let from = 0; ; from += page) {
+    const { data, error } = await db.from('receipts').select('id,data').order('id').range(from, from + page - 1);
+    if (error) throw error;
+    out.push(...data);
+    if (data.length < page) break;
+  }
+  return out
+    .map(r => ({ ...(r.data || {}), id: r.id, raw: r.data }))
+    .sort((a, b) => String(b.purchase_date || '').localeCompare(String(a.purchase_date || '')) || b.id - a.id);
+}
+
+function buildMonths() {
+  const months = [...new Set(receipts.map(r => String(r.purchase_date || '').slice(0, 7)).filter(Boolean))].sort().reverse();
+  const sel = $('month');
+  sel.replaceChildren(new Option('All months', ''));
+  months.forEach(m => sel.add(new Option(m, m)));
+}
+
+function last12() {
+  const now = new Date(), out = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    out.push({ key: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'),
+               label: d.toLocaleString('en-GB', { month: 'short' }),
+               long: d.toLocaleString('en-GB', { month: 'long', year: 'numeric' }), total: 0 });
+  }
+  return out;
+}
+const short = v => v >= 1000 ? '£' + (v / 1000).toFixed(1) + 'k' : '£' + Math.round(v);
+
+function drawChart() {
+  const months = last12();
+  const idx = Object.fromEntries(months.map((m, i) => [m.key, i]));
+  for (const r of receipts) {
+    const s = r.summary || {};
+    const i = idx[String(r.purchase_date || '').slice(0, 7)];
+    if (i != null && (s.currency || 'GBP') === 'GBP') months[i].total += num(s.balance_due);
+  }
+  const max = Math.max(1, ...months.map(m => m.total));
+  const picked = $('month').value;
+  const chart = $('chart');
+  chart.replaceChildren();
+  chart.classList.toggle('picked', months.some(m => m.key === picked));
+  for (const m of months) {
+    const b = el('button', 'col' + (m.key === picked ? ' on' : ''));
+    b.title = m.long + ': ' + money(m.total, 'GBP');
+    b.setAttribute('aria-label', b.title);
+    const bar = el('span', 'bar');
+    bar.style.height = Math.round(100 * m.total / max) + 'px';
+    b.append(el('span', 'val', m.total ? short(m.total) : ''), bar, el('span', 'lab', m.label));
+    b.onclick = () => {
+      const sel = $('month');
+      sel.value = (sel.value === m.key) ? '' : m.key;
+      if (sel.selectedIndex < 0) sel.value = '';   // month with no receipts
+      shown = PAGE; render();
+    };
+    chart.append(b);
+  }
+}
+
+function render() {
+  drawChart();
+  const q = $('q').value.trim().toLowerCase();
+  const m = $('month').value;
+  const rows = receipts.filter(r => {
+    if (m && !String(r.purchase_date || '').startsWith(m)) return false;
+    if (!q) return true;
+    const hay = [r.shop, r.store_location, ...(Array.isArray(r.items) ? r.items.map(i => i && i.name) : [])].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+
+  $('count').textContent = rows.length;
+  const gbp = rows.filter(r => ((r.summary || {}).currency || 'GBP') === 'GBP');
+  const total = gbp.reduce((s, r) => s + num((r.summary || {}).balance_due), 0);
+  $('total').textContent = money(total, 'GBP') + (gbp.length < rows.length ? ' (GBP only)' : '');
+
+  const list = $('list');
+  list.replaceChildren();
+  if (!rows.length) { $('more').hidden = true; return list.append(el('p', 'muted center', 'No receipts match.')); }
+
+  for (const r of rows.slice(0, shown)) {
+    const s = r.summary || {};
+    const d = el('details');
+    const sum = el('summary');
+    sum.append(el('span', 'date', r.purchase_date || '—'), el('span', 'shop', r.shop || 'Unknown'), el('span', 'amt', money(s.balance_due, s.currency)));
+    d.append(sum);
+
+    const body = el('div', 'body');
+    const meta = [r.store_location, r.purchase_time, s.payment_method].filter(Boolean).join(' · ');
+    if (meta) body.append(el('p', 'muted', meta));
+    d.append(body);
+    d.addEventListener('toggle', () => {           // breakdown is built only when a row is first opened
+      if (!d.open || body.querySelector('table')) return;
+      const t = el('table');
+      for (const i of (Array.isArray(r.items) ? r.items : [])) {
+        if (!i) continue;
+        const tr = el('tr');
+        const qty = num(i.qty) && num(i.qty) !== 1 ? ' × ' + i.qty : '';
+        tr.append(el('td', null, (i.name || 'Item') + qty), el('td', 'n', money(i.net_total != null ? i.net_total : i.line_total, s.currency)));
+        t.append(tr);
+      }
+      const link = el('a', 'jsonlink', 'json');
+      link.href = '#';
+      link.setAttribute('aria-expanded', 'false');
+      const pre = el('pre', null, JSON.stringify(r.raw, null, 2));
+      pre.hidden = true;
+      link.onclick = e => {
+        e.preventDefault();
+        pre.hidden = !pre.hidden;
+        link.textContent = pre.hidden ? 'json' : 'hide json';
+        link.setAttribute('aria-expanded', String(!pre.hidden));
+      };
+      body.append(t, link, pre);
+    });
+    list.append(d);
+  }
+  const left = rows.length - Math.min(shown, rows.length);
+  $('more').hidden = left <= 0;
+  $('more').textContent = 'Load more (' + left + ' left)';
+}
+return { open };
+})();
+
+guardPage(() => Receipts.open());
+</script>
+</body>
+</html>
