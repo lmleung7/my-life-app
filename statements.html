@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Statements</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* ===== Statements (scoped to #stmts) ===== */
+body[data-view="stmts"]{
+  --bg: #edf0f3;
+  --surface: #ffffff;
+  --surface-2: #f6f8fa;
+  --ink: #101a24;
+  --muted: #5a6978;
+  --line: #d7dde4;
+  --in: #0f7d59;
+  --in-bg: #dcf1e8;
+  --out: #b3382c;
+  --out-bg: #f7e1de;
+  --accent: #1f5fbf;
+  --warn-bg: #fbeccb;
+  --warn: #7a4b00;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(16, 26, 36, .06), 0 6px 20px -12px rgba(16, 26, 36, .25);
+}
+@media (prefers-color-scheme: dark){body[data-view="stmts"]{
+    --bg: #0d1319;
+    --surface: #151d26;
+    --surface-2: #1b2530;
+    --ink: #e8edf2;
+    --muted: #93a2b1;
+    --line: #26323f;
+    --in: #4cc79a;
+    --in-bg: #12362a;
+    --out: #f0867a;
+    --out-bg: #3d1f1b;
+    --accent: #7aa7f0;
+    --warn-bg: #3b2d0f;
+    --warn: #f1c46b;
+    --shadow: none;
+  }}
+body[data-view="stmts"]{
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 1rem/1.5 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+#stmts a{ color: inherit; text-decoration: none; }
+#stmts button{ font: inherit; color: inherit; }
+#stmts .wrap{ max-width: 1000px; margin: 0 auto; padding: 24px 16px 64px; }
+#stmts .bar{ display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0 20px; }
+#stmts .brand{ font-weight: 600; font-size: 1.0625rem; letter-spacing: -.01em; }
+#stmts .who{ display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: .875rem; min-width: 0; }
+#stmts .who span{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#stmts .link-btn{ background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; cursor: pointer; color: var(--ink); }
+#stmts .link-btn:hover{ background: var(--surface); }
+#stmts h1{ font-size: 1.875rem; line-height: 1.15; letter-spacing: -.02em; font-weight: 600; margin: 8px 0 4px; }
+#stmts .sub{ color: var(--muted); margin: 0 0 24px; }
+#stmts .crumbs{ display: flex; flex-wrap: wrap; gap: 6px; color: var(--muted); font-size: .9375rem; margin-bottom: 8px; }
+#stmts .crumbs a{ color: var(--accent); }
+#stmts .crumbs a:hover{ text-decoration: underline; }
+#stmts .grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+#stmts .inst{ display: flex; flex-direction: column; gap: 16px; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); transition: transform .15s ease, border-color .15s ease; }
+#stmts .inst:hover{ transform: translateY(-2px); border-color: var(--accent); }
+#stmts .logo{ flex: none; width: 64px; height: 64px; border-radius: 16px; background: #fff; border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden; }
+#stmts .logo img{ width: 40px; height: 40px; object-fit: contain; }
+#stmts .logo.big{ width: 72px; height: 72px; }
+#stmts .logo.big img{ width: 48px; height: 48px; }
+#stmts .monogram{ font-weight: 600; font-size: 1.375rem; color: #26323f; }
+#stmts .inst h2{ margin: 0; font-size: 1.1875rem; letter-spacing: -.01em; font-weight: 600; }
+#stmts .meta{ color: var(--muted); font-size: .9375rem; margin: 2px 0 0; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+#stmts .head{ display: flex; align-items: center; gap: 18px; margin-bottom: 20px; }
+#stmts .head h1{ margin: 0; }
+#stmts .controls{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+#stmts .chips{ display: flex; flex-wrap: wrap; gap: 8px; }
+#stmts .chip{ border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-size: .9375rem; }
+#stmts .chip[aria-pressed="true"]{ background: var(--ink); color: var(--bg); border-color: var(--ink); }
+#stmts .check{ display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: .9375rem; cursor: pointer; }
+#stmts .check input{ width: 18px; height: 18px; accent-color: var(--accent); }
+#stmts .search{ flex: 1 1 220px; max-width: 360px; padding: 9px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
+#stmts .list{ background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+#stmts .cols,#stmts .stmt{ display: grid; grid-template-columns: minmax(180px, 1.5fr) minmax(90px, 1fr) 118px 118px 130px; gap: 16px; align-items: center; padding: 14px 20px; }
+#stmts .cols{ color: var(--muted); font-size: .8125rem; border-bottom: 1px solid var(--line); background: var(--surface-2); padding-top: 10px; padding-bottom: 10px; }
+#stmts .stmt{ border-bottom: 1px solid var(--line); }
+#stmts .stmt:last-child{ border-bottom: 0; }
+#stmts .stmt:hover{ background: var(--surface-2); }
+#stmts .stmt .period{ font-weight: 500; }
+#stmts .stmt .acct{ color: var(--muted); font-size: .875rem; }
+#stmts .r{ text-align: right; }
+#stmts .in{ color: var(--in); }
+#stmts .out{ color: var(--out); }
+#stmts .flow{ display: grid; gap: 4px; }
+#stmts .flow i{ display: block; height: 6px; border-radius: 3px; min-width: 2px; }
+#stmts .flow .fin{ background: var(--in); }
+#stmts .flow .fout{ background: var(--out); }
+#stmts .tick{ display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--in); margin-right: 8px; }
+#stmts .tick.bad{ background: var(--out); }
+#stmts .summary{ display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin: 16px 0; }
+#stmts .stat{ padding: 16px 20px; border-right: 1px solid var(--line); min-width: 0; }
+#stmts .stat:last-child{ border-right: 0; }
+#stmts .stat .k{ color: var(--muted); font-size: .875rem; }
+#stmts .stat .v{ font-size: 1.375rem; font-weight: 600; letter-spacing: -.01em; margin-top: 2px; overflow-wrap: anywhere; }
+#stmts .badges{ display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+#stmts .badge{ display: inline-flex; align-items: center; gap: 6px; font-size: .875rem; padding: 4px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+#stmts .badge.ok{ background: var(--in-bg); color: var(--in); border-color: transparent; }
+#stmts .badge.bad{ background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+#stmts .tablebox{ background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+#stmts .tx{ width: 100%; border-collapse: collapse; }
+#stmts .tx th{ text-align: left; font-weight: 500; color: var(--muted); font-size: .8125rem; padding: 10px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+#stmts .tx th.num,#stmts .tx td.num{ text-align: right; }
+#stmts .tx td{ padding: 11px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+#stmts .tx tr:last-child td{ border-bottom: 0; }
+#stmts .tx td.date{ white-space: nowrap; color: var(--muted); font-size: .9375rem; }
+#stmts .tx td.desc{ overflow-wrap: anywhere; }
+#stmts .tx tr.internal td{ color: var(--muted); }
+#stmts .tx tr.internal td.amt{ color: var(--muted); }
+#stmts .tag{ display: inline-block; margin-left: 8px; font-size: .75rem; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); vertical-align: 1px; white-space: nowrap; }
+#stmts .note{ color: var(--muted); font-size: .8125rem; display: block; }
+#stmts .foot{ color: var(--muted); font-size: .9375rem; margin: 12px 4px 0; }
+#stmts .center{ min-height: 60vh; display: grid; place-content: center; text-align: center; gap: 14px; padding: 24px; }
+#stmts .center p{ margin: 0; color: var(--muted); max-width: 420px; }
+#stmts .btn{ background: var(--ink); color: var(--bg); border: 0; border-radius: 10px; padding: 11px 22px; font-weight: 500; cursor: pointer; justify-self: center; }
+#stmts .btn:hover{ opacity: .9; }
+#stmts .skeleton{ height: 76px; border-radius: var(--radius); background: linear-gradient(90deg, var(--surface) 0%, var(--surface-2) 50%, var(--surface) 100%); background-size: 200% 100%; animation: sh 1.4s linear infinite; }
+@keyframes sh{ to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce){#stmts .skeleton{ animation: none; }
+#stmts .inst{ transition: none; }
+#stmts .inst:hover{ transform: none; }}
+@media (max-width: 760px){#stmts h1{ font-size: 1.625rem; }
+#stmts .cols{ display: none; }
+#stmts .stmt{ grid-template-columns: 1fr 1fr; gap: 6px 12px; padding: 14px 16px; }
+#stmts .stmt .c-period{ grid-column: 1 / -1; }
+#stmts .stmt .flow{ grid-column: 1 / -1; }
+#stmts .stmt .c-in::before{ content: "In "; color: var(--muted); }
+#stmts .stmt .c-out::before{ content: "Out "; color: var(--muted); }
+#stmts .stmt .c-close{ grid-column: 1 / -1; text-align: left; color: var(--muted); font-size: .9375rem; }
+#stmts .stmt .c-close::before{ content: "Closing "; }
+#stmts .r{ text-align: left; }
+#stmts .stmt .c-out{ text-align: right; }
+#stmts .summary{ grid-template-columns: 1fr 1fr; }
+#stmts .stat:nth-child(2){ border-right: 0; }
+#stmts .stat:nth-child(-n+2){ border-bottom: 1px solid var(--line); }
+#stmts .tx thead{ display: none; }
+#stmts .tx,#stmts .tx tbody{ display: block; }
+#stmts .tx tr{ display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+#stmts .tx tr:last-child{ border-bottom: 0; }
+#stmts .tx td{ display: block; padding: 0; border: 0; }
+#stmts .tx td.date{ grid-column: 1 / -1; font-size: .8125rem; }
+#stmts .tx td.amt{ grid-column: 2; grid-row: 2; text-align: right; font-weight: 500; }
+#stmts .tx td.bal{ grid-column: 1 / -1; text-align: left; color: var(--muted); font-size: .8125rem; }
+#stmts .tx td.bal::before{ content: "Balance "; }}
+body[data-view="stmts"] { --fg: var(--ink); --panel: var(--surface); }
+</style>
+</head>
+<body data-view="stmts">
+<div class="topnav" id="topnav" hidden>
+  <nav class="tabs" aria-label="Sections">
+    <a class="tab" href="./" aria-label="Home" title="Home">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg>
+    </a>
+  </nav>
+  <div class="navacct">
+    <span id="who" class="navemail"></span>
+    <button id="signout" class="so">Sign out</button>
+  </div>
+</div>
+
+<div id="stmts">
+  <div class="wrap" id="stapp"></div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const Stmts = (() => {
+'use strict';
+
+const app = document.getElementById('stapp');
+
+/* ---------- helpers ---------- */
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'text') el.textContent = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat(Infinity)) {
+    if (kid == null || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+const nf = {};
+function fmt(cur) { return nf[cur] || (nf[cur] = new Intl.NumberFormat('en-GB', { style: 'currency', currency: cur })); }
+const money = (minor, cur) => fmt(cur || 'GBP').format(Number(minor) / 100);
+const signed = (minor, cur) => (Number(minor) > 0 ? '+' : Number(minor) < 0 ? '\u2212' : '') + money(Math.abs(Number(minor)), cur);
+const parse = iso => new Date(iso + 'T00:00:00');
+const dShort = iso => parse(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+const dFull = iso => parse(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+function period(a, b) {
+  return parse(a).getFullYear() === parse(b).getFullYear() ? `${dShort(a)} \u2013 ${dFull(b)}` : `${dFull(a)} \u2013 ${dFull(b)}`;
+}
+function balance(type, minor, cur) {
+  const n = Number(minor);
+  if (type === 'credit_card') return n < 0 ? `${money(-n, cur)} owed` : n > 0 ? `${money(n, cur)} in credit` : money(0, cur);
+  return money(n, cur);
+}
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
+};
+
+/* ---------- logos: logo_url if set, else the bank's site icon, else initials ---------- */
+function logo(inst, big) {
+  const tile = h('div', { class: 'logo' + (big ? ' big' : ''), 'aria-hidden': 'true' });
+  const initials = inst.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  const mono = () => { tile.replaceChildren(h('span', { class: 'monogram', text: initials })); };
+  const src = inst.logo_url || (inst.domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(inst.domain)}&sz=128` : null);
+  if (!src) { mono(); return tile; }
+  const img = h('img', { src, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
+  img.addEventListener('error', mono);
+  img.addEventListener('load', () => { if (img.naturalWidth && img.naturalWidth < 24) mono(); });
+  tile.append(img);
+  return tile;
+}
+
+/* ---------- data access ---------- */
+let api;
+if (DEMO) {
+  api = makeDemoApi();
+} else {
+  const must = ({ data, error }) => { if (error) throw error; return data; };
+  api = {
+    institutions: async () => must(await db.from('fin_institution_overview').select('*').order('sort_order')),
+    institution: async id => must(await db.from('fin_institution_overview').select('*').eq('id', id).single()),
+    statements: async instId => must(await db.from('fin_statement_summary').select('*').eq('institution_id', instId).order('period_end', { ascending: false })),
+    statement: async id => must(await db.from('fin_statement_summary').select('*').eq('statement_id', id).single()),
+    transactions: async id => must(await db.from('fin_transactions')
+      .select('id,line_no,txn_date,posted_date,description,amount_minor,balance_after_minor,txn_type,is_internal_transfer,foreign_currency,foreign_amount_minor,fx_rate,notes')
+      .eq('statement_id', id).order('line_no'))
+  };
+}
+
+/* ---------- shell ---------- */
+function shell(...content) { app.replaceChildren(...content); window.scrollTo(0, 0); }
+function loading() {
+  app.replaceChildren(h('div', { class: 'grid' }, [1, 2, 3].map(() => h('div', { class: 'skeleton' }))));
+}
+function failure(err, retry) {
+  console.error(err);
+  app.replaceChildren(h('div', { class: 'center' },
+    h('h1', null, 'Could not load this page'),
+    h('p', null, (err && err.message) || 'Something went wrong while reading the database.'),
+    h('button', { class: 'btn', onclick: retry }, 'Try again')));
+}
+function renderNoAccess() {
+  app.replaceChildren(h('div', { class: 'center' },
+    h('h1', null, 'No access'),
+    h('p', null, 'This Google account is not the owner of these statements.')));
+}
+
+/* ---------- views ---------- */
+async function viewHome() {
+  loading();
+  const list = await api.institutions();
+  if (!list.length) return renderNoAccess();
+  const totalStmts = list.reduce((n, i) => n + Number(i.statement_count), 0);
+  shell(
+    h('h1', null, 'Statements'),
+    h('p', { class: 'sub' }, `${totalStmts} statements from ${list.length} institutions. Choose one to see its statements.`),
+    h('div', { class: 'grid' }, list.map(i =>
+      h('a', { class: 'inst', href: `#/i/${i.id}` },
+        logo(i, false),
+        h('div', null,
+          h('h2', null, i.name),
+          h('p', { class: 'meta' },
+            h('span', null, `${i.account_count} ${i.account_count == 1 ? 'account' : 'accounts'}`),
+            h('span', null, `${i.statement_count} statements`)),
+          i.last_period_end ? h('p', { class: 'meta' }, h('span', null, `${dFull(i.first_period_start)} to ${dFull(i.last_period_end)}`)) : null)))));
+}
+
+async function viewInstitution(id) {
+  loading();
+  const [inst, stmts] = await Promise.all([api.institution(id), api.statements(id)]);
+  const accounts = [...new Map(stmts.map(s => [s.account_id, s])).values()];
+  let accountFilter = null;
+  let leaveOut = store.get('leaveOutTransfers', false);
+
+  const listBox = h('div', { class: 'list' });
+  const chips = h('div', { class: 'chips' });
+
+  function accountLabel(s) { return s.product + (s.last4 ? ` ending ${s.last4}` : ''); }
+
+  function paint() {
+    const rows = stmts.filter(s => accountFilter == null || s.account_id === accountFilter);
+    const inOf = s => Number(leaveOut ? s.ext_in_minor : s.money_in_minor);
+    const outOf = s => Number(leaveOut ? s.ext_out_minor : s.money_out_minor);
+    const max = Math.max(1, ...rows.map(s => Math.max(inOf(s), outOf(s))));
+    listBox.replaceChildren(
+      h('div', { class: 'cols' }, h('span', null, 'Statement'), h('span', null, 'In and out'), h('span', { class: 'r' }, 'Money in'), h('span', { class: 'r' }, 'Money out'), h('span', { class: 'r' }, 'Closing balance')),
+      ...(rows.length ? rows.map(s => h('a', { class: 'stmt', href: `#/s/${s.statement_id}` },
+        h('div', { class: 'c-period' },
+          h('div', { class: 'period' }, h('span', { class: 'tick' + (Number(s.diff_minor) === 0 ? '' : ' bad'), title: Number(s.diff_minor) === 0 ? 'Balances tie out' : 'Balances do not tie out' }), period(s.period_start, s.period_end)),
+          accounts.length > 1 ? h('div', { class: 'acct' }, accountLabel(s)) : null),
+        h('div', { class: 'flow', 'aria-hidden': 'true' },
+          h('i', { class: 'fin', style: `width:${(inOf(s) / max * 100).toFixed(1)}%` }),
+          h('i', { class: 'fout', style: `width:${(outOf(s) / max * 100).toFixed(1)}%` })),
+        h('div', { class: 'r in c-in' }, money(inOf(s), s.currency)),
+        h('div', { class: 'r out c-out' }, money(outOf(s), s.currency)),
+        h('div', { class: 'r c-close' }, balance(s.account_type, s.closing_balance_minor, s.currency))))
+        : [h('div', { class: 'center' }, h('p', null, 'No statements have been imported for this institution yet.'))]));
+    chips.replaceChildren(...(accounts.length > 1 ? [
+      h('button', { class: 'chip', 'aria-pressed': String(accountFilter == null), onclick: () => { accountFilter = null; paint(); } }, 'All accounts'),
+      ...accounts.map(a => h('button', { class: 'chip', 'aria-pressed': String(accountFilter === a.account_id), onclick: () => { accountFilter = a.account_id; paint(); } }, accountLabel(a)))
+    ] : []));
+  }
+
+  const toggle = h('label', { class: 'check' },
+    h('input', { type: 'checkbox', ...(leaveOut ? { checked: '' } : {}), onchange: e => { leaveOut = e.target.checked; store.set('leaveOutTransfers', leaveOut); paint(); } }),
+    'Leave out transfers between my own accounts');
+
+  shell(
+    h('nav', { class: 'crumbs', 'aria-label': 'Breadcrumb' }, h('a', { href: '#/' }, 'Institutions'), h('span', null, '/'), h('span', null, inst.name)),
+    h('div', { class: 'head' }, logo(inst, true), h('div', null, h('h1', null, inst.name),
+      h('p', { class: 'meta' }, h('span', null, `${inst.statement_count} statements, newest first`)))),
+    h('div', { class: 'controls' }, chips, toggle),
+    listBox);
+  paint();
+}
+
+async function viewStatement(id) {
+  loading();
+  const sum = await api.statement(id);
+  const [inst, txns] = await Promise.all([api.institution(sum.institution_id), api.transactions(id)]);
+  const cur = sum.currency;
+  let query = '';
+  let hideInternal = store.get('hideInternalInTxns', false);
+
+  const tbody = h('tbody');
+  const foot = h('p', { class: 'foot', 'aria-live': 'polite' });
+
+  function paint() {
+    const q = query.trim().toLowerCase();
+    const rows = txns.filter(t => (!hideInternal || !t.is_internal_transfer) && (!q || t.description.toLowerCase().includes(q)));
+    tbody.replaceChildren(...rows.map(t => {
+      const amt = Number(t.amount_minor);
+      return h('tr', { class: t.is_internal_transfer ? 'internal' : '' },
+        h('td', { class: 'date' }, dShort(t.txn_date)),
+        h('td', { class: 'desc' },
+          t.description,
+          t.is_internal_transfer ? h('span', { class: 'tag', title: 'Moves money between your own accounts' }, 'own account') : null,
+          t.txn_type === 'fee' ? h('span', { class: 'tag' }, 'fee') : null,
+          t.txn_type === 'refund' ? h('span', { class: 'tag' }, 'refund') : null,
+          t.foreign_currency ? h('span', { class: 'note' }, `${money(t.foreign_amount_minor, t.foreign_currency)} at ${t.fx_rate}${t.notes ? `, ${t.notes}` : ''}`) : (t.notes ? h('span', { class: 'note' }, t.notes) : null)),
+        h('td', { class: 'num amt ' + (amt > 0 ? 'in' : 'out') }, signed(amt, cur)),
+        h('td', { class: 'num bal' }, t.balance_after_minor == null ? '' : money(t.balance_after_minor, cur)));
+    }));
+    const tin = rows.reduce((n, t) => n + (Number(t.amount_minor) > 0 ? Number(t.amount_minor) : 0), 0);
+    const tout = rows.reduce((n, t) => n + (Number(t.amount_minor) < 0 ? -Number(t.amount_minor) : 0), 0);
+    foot.textContent = rows.length
+      ? `Showing ${rows.length} of ${txns.length} transactions. Money in ${money(tin, cur)}, money out ${money(tout, cur)}.`
+      : 'No transactions match.';
+  }
+
+  const hasBalance = txns.some(t => t.balance_after_minor != null);
+  const d = sum.details || {};
+  const chipsInfo = [];
+  if (d.credit_limit_minor != null) chipsInfo.push(`Credit limit ${money(d.credit_limit_minor, cur)}`);
+  if (d.minimum_payment_minor != null) chipsInfo.push(`Minimum payment ${money(d.minimum_payment_minor, cur)}`);
+  if (d.payment_due_date) chipsInfo.push(`Due ${dFull(d.payment_due_date)}`);
+  if (d.apr_simple != null) chipsInfo.push(`Interest ${d.apr_simple}% a year`);
+  if (d.aer != null) chipsInfo.push(`AER ${d.aer}%`);
+  if (d.interest_charged_minor != null) chipsInfo.push(`Interest charged ${money(d.interest_charged_minor, cur)}`);
+  if (d.avios_earned != null) chipsInfo.push(`${d.avios_earned} Avios earned`);
+
+  const ties = Number(sum.diff_minor) === 0;
+
+  shell(
+    h('nav', { class: 'crumbs', 'aria-label': 'Breadcrumb' },
+      h('a', { href: '#/' }, 'Institutions'), h('span', null, '/'),
+      h('a', { href: `#/i/${inst.id}` }, inst.name), h('span', null, '/'),
+      h('span', null, period(sum.period_start, sum.period_end))),
+    h('div', { class: 'head' }, logo(inst, true), h('div', null,
+      h('h1', null, period(sum.period_start, sum.period_end)),
+      h('p', { class: 'meta' }, h('span', null, sum.product + (sum.last4 ? ` ending ${sum.last4}` : '')), sum.holder_name ? h('span', null, sum.holder_name) : null))),
+    h('div', { class: 'summary' },
+      h('div', { class: 'stat' }, h('div', { class: 'k' }, 'Opening balance'), h('div', { class: 'v' }, balance(sum.account_type, sum.opening_balance_minor, cur))),
+      h('div', { class: 'stat' }, h('div', { class: 'k' }, 'Money in'), h('div', { class: 'v in' }, money(sum.money_in_minor, cur))),
+      h('div', { class: 'stat' }, h('div', { class: 'k' }, 'Money out'), h('div', { class: 'v out' }, money(sum.money_out_minor, cur))),
+      h('div', { class: 'stat' }, h('div', { class: 'k' }, 'Closing balance'), h('div', { class: 'v' }, balance(sum.account_type, sum.closing_balance_minor, cur)))),
+    h('div', { class: 'badges' },
+      h('span', { class: 'badge ' + (ties ? 'ok' : 'bad') }, ties ? 'Opening balance plus transactions equals closing balance' : `Does not tie out: off by ${money(Math.abs(Number(sum.diff_minor)), cur)}`),
+      chipsInfo.map(t => h('span', { class: 'badge' }, t))),
+    h('div', { class: 'controls' },
+      h('input', { class: 'search', type: 'search', placeholder: 'Search descriptions', 'aria-label': 'Search descriptions', oninput: e => { query = e.target.value; paint(); } }),
+      h('label', { class: 'check' },
+        h('input', { type: 'checkbox', ...(hideInternal ? { checked: '' } : {}), onchange: e => { hideInternal = e.target.checked; store.set('hideInternalInTxns', hideInternal); paint(); } }),
+        'Hide transfers between my own accounts')),
+    h('div', { class: 'tablebox' },
+      h('table', { class: 'tx' },
+        h('thead', null, h('tr', null,
+          h('th', null, 'Date'), h('th', null, 'Description'), h('th', { class: 'num' }, 'Amount'), h('th', { class: 'num' }, hasBalance ? 'Balance' : ''))),
+        tbody)),
+    foot);
+  paint();
+}
+
+/* ---------- entry points ---------- */
+async function open(path) {
+  const m = (path || '').match(/^\/(i|s)\/(\d+)$/);
+  try {
+    if (m && m[1] === 'i') await viewInstitution(Number(m[2]));
+    else if (m && m[1] === 's') await viewStatement(Number(m[2]));
+    else await viewHome();
+  } catch (err) { failure(err, () => open(path)); }
+}
+
+/* ---------- demo data (?demo=1): invented figures, no sign-in, nothing from the database ---------- */
+function makeDemoApi() {
+  const institutions = [
+    { id: 1, slug: 'northbank', name: 'Northbank', domain: null, logo_url: null, sort_order: 1, account_count: 2, statement_count: 3, first_period_start: '2026-06-01', last_period_end: '2026-08-31' },
+    { id: 2, slug: 'plumcard', name: 'Plum Card', domain: null, logo_url: null, sort_order: 2, account_count: 1, statement_count: 2, first_period_start: '2026-07-04', last_period_end: '2026-09-03' }
+  ];
+  const mk = (statement_id, institution_id, account_id, product, account_type, last4, ps, pe, open, close, details, tx) => {
+    const inn = tx.filter(t => t[3] > 0).reduce((n, t) => n + t[3], 0);
+    const out = -tx.filter(t => t[3] < 0).reduce((n, t) => n + t[3], 0);
+    const extIn = tx.filter(t => t[3] > 0 && !t[4]).reduce((n, t) => n + t[3], 0);
+    const extOut = -tx.filter(t => t[3] < 0 && !t[4]).reduce((n, t) => n + t[3], 0);
+    let bal = open;
+    const rows = tx.map((t, i) => { bal += t[3]; return { id: statement_id * 100 + i, line_no: i + 1, txn_date: t[0], posted_date: null, description: t[1], amount_minor: t[3], balance_after_minor: account_type === 'credit_card' ? null : bal, txn_type: t[2], is_internal_transfer: !!t[4], foreign_currency: null, notes: null }; });
+    return { sum: { statement_id, account_id, institution_id, account_slug: product, product, account_type, currency: 'GBP', last4, holder_name: 'A. Sample', period_start: ps, period_end: pe, opening_balance_minor: open, closing_balance_minor: close, money_in_minor: inn, money_out_minor: out, ext_in_minor: extIn, ext_out_minor: extOut, txn_count: tx.length, diff_minor: open + inn - out - close, details }, rows };
+  };
+  const data = [
+    mk(1, 1, 10, 'Current account', 'current', '1234', '2026-06-01', '2026-06-30', 120000, 299500, {}, [
+      ['2026-06-03', 'Greenfield Grocers', 'purchase', -5420], ['2026-06-05', 'Salary Acme Ltd', 'payment', 250000], ['2026-06-08', 'Gas & Power direct debit', 'direct_debit', -8800],
+      ['2026-06-12', 'Plum Card payment', 'payment', -60000, true], ['2026-06-19', 'Cafe Oval', 'purchase', -1240], ['2026-06-27', 'Refund Hardware Hut', 'refund', 4960]]),
+    mk(2, 1, 10, 'Current account', 'current', '1234', '2026-07-01', '2026-07-31', 299500, 417200, {}, [
+      ['2026-07-02', 'Greenfield Grocers', 'purchase', -6110], ['2026-07-05', 'Salary Acme Ltd', 'payment', 250000], ['2026-07-14', 'Plum Card payment', 'payment', -90000, true], ['2026-07-22', 'Bookshop Lane', 'purchase', -3190], ['2026-07-30', 'Water bill', 'direct_debit', -33000]]),
+    mk(3, 1, 11, 'Savings', 'savings', '5678', '2026-06-01', '2026-08-31', 500000, 512300, { aer: 3.4, interest_earned_minor: 2300 }, [
+      ['2026-06-15', 'Transfer in', 'payment', 10000, true], ['2026-08-31', 'Interest', 'interest', 2300]]),
+    mk(4, 2, 20, 'Plum Card', 'credit_card', '9012', '2026-07-04', '2026-08-03', -60000, -90000, { credit_limit_minor: 300000, minimum_payment_minor: 2500, payment_due_date: '2026-08-28', apr_simple: 24.9, interest_charged_minor: 0 }, [
+      ['2026-07-14', 'Payment, thank you', 'payment', 60000, true], ['2026-07-06', 'Harbour Ferries', 'purchase', -4200], ['2026-07-09', 'Market Hall', 'purchase', -7300], ['2026-07-21', 'Skyline Hotels', 'purchase', -76500], ['2026-08-03', 'Monthly fee', 'fee', -2000]]),
+    mk(5, 2, 20, 'Plum Card', 'credit_card', '9012', '2026-08-04', '2026-09-03', -90000, -45000, { credit_limit_minor: 300000, minimum_payment_minor: 2500, payment_due_date: '2026-09-28', apr_simple: 24.9, interest_charged_minor: 0 }, [
+      ['2026-08-20', 'Payment, thank you', 'payment', 90000, true], ['2026-08-08', 'Harbour Ferries', 'purchase', -2800], ['2026-08-30', 'Skyline Hotels', 'purchase', -40200], ['2026-09-03', 'Monthly fee', 'fee', -2000]])
+  ];
+  const wait = v => new Promise(r => setTimeout(() => r(v), 60));
+  return {
+    institutions: () => wait(institutions),
+    institution: id => wait(institutions.find(i => i.id === id)),
+    statements: id => wait(data.filter(d => d.sum.institution_id === id).map(d => d.sum).sort((a, b) => b.period_end.localeCompare(a.period_end))),
+    statement: id => wait(data.find(d => d.sum.statement_id === id).sum),
+    transactions: id => wait(data.find(d => d.sum.statement_id === id).rows)
+  };
+}
+
+return { open };
+})();
+
+function route() { Stmts.open(location.hash.replace(/^#/, '')); }
+window.addEventListener('hashchange', route);
+guardPage(route);
+</script>
+</body>
+</html>

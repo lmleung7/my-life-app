@@ -18,7 +18,7 @@ jobs:
         with:
           node-version: 22
       - name: Validate HTML
-        run: npx --yes html-validate@9 index.html
+        run: npx --yes html-validate@9 index.html receipts.html statements.html
 
   secrets:
     name: Secret scan

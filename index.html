@@ -4,230 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Receipts &amp; Statements</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<title>My Life</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="shared.css">
 <style>
-/* ===== Receipts (scoped to #receipts) ===== */
-body[data-view="receipts"]{ --bg:#f6f7f9; --card:#fff; --text:#1a1d21; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; }
-@media (prefers-color-scheme: dark){body[data-view="receipts"]{ --bg:#111418; --card:#1b1f25; --text:#e8eaed; --muted:#9aa3af; --line:#2c323a; --accent:#6ea0ff; }}
-*{ box-sizing: border-box; }
-body[data-view="receipts"]{ margin:0; font:15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--text); }
-#receipts main{ max-width:820px; margin:0 auto; padding:16px; }
-#receipts header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
-#receipts h1{ font-size:20px; margin:0; }
-#receipts button{ font:inherit; padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--text); cursor:pointer; }
-#receipts button.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
-#receipts .muted{ color:var(--muted); font-size:13px; }
-#receipts .center{ text-align:center; padding:56px 16px; }
-#receipts .filters{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
-#receipts .filters input,#receipts .filters select{ font:inherit; padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--text); }
-#receipts .filters input{ flex:1; min-width:160px; }
-#receipts .stats{ display:flex; gap:8px; margin-bottom:12px; }
-#receipts .stat{ flex:1; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
-#receipts .stat b{ display:block; font-size:18px; font-variant-numeric:tabular-nums; }
-#receipts details{ background:var(--card); border:1px solid var(--line); border-radius:10px; margin-bottom:8px; }
-#receipts summary{ display:flex; gap:10px; align-items:baseline; padding:10px 12px; cursor:pointer; list-style:none; }
-#receipts summary::-webkit-details-marker{ display:none; }
-#receipts .date{ color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap; }
-#receipts .shop{ flex:1; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-#receipts .amt{ font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap; }
-#receipts .body{ padding:0 12px 12px; border-top:1px solid var(--line); min-width:0; }
-#receipts details{ overflow:hidden; }
-#receipts table{ width:100%; border-collapse:collapse; margin-top:8px; font-size:14px; }
-#receipts td{ padding:4px 0; vertical-align:top; }
-#receipts td.n{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; padding-left:10px; }
-#receipts pre{ margin:8px 0 0; padding:10px; background:var(--bg); border-radius:8px; font:12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-x:auto; white-space:pre; }
-#receipts .chartcard{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:12px; }
-#receipts .chart{ display:flex; align-items:flex-end; gap:4px; height:150px; margin-top:6px; }
-#receipts .col{ flex:1; min-width:0; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:3px; padding:0; border:0; border-radius:6px; background:none; }
-#receipts .col .val{ font-size:10px; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap; }
-#receipts .col .bar{ width:100%; max-width:40px; min-height:2px; background:var(--accent); border-radius:4px 4px 0 0; }
-#receipts .col .lab{ font-size:11px; color:var(--muted); }
-#receipts .chart.picked .col:not(.on) .bar{ opacity:.35; }
-#receipts .col.on .lab,#receipts .col.on .val{ color:var(--text); font-weight:600; }
-#receipts .jsonlink{ display:inline-block; margin-top:8px; font-size:13px; color:var(--accent); }
-#receipts #more{ display:block; width:100%; margin:4px 0 24px; }
-[hidden]{ display:none !important; }
-/* ===== Statements (scoped to #stmts) ===== */
-body[data-view="stmts"]{
-  --bg: #edf0f3;
-  --surface: #ffffff;
-  --surface-2: #f6f8fa;
-  --ink: #101a24;
-  --muted: #5a6978;
-  --line: #d7dde4;
-  --in: #0f7d59;
-  --in-bg: #dcf1e8;
-  --out: #b3382c;
-  --out-bg: #f7e1de;
-  --accent: #1f5fbf;
-  --warn-bg: #fbeccb;
-  --warn: #7a4b00;
-  --radius: 14px;
-  --shadow: 0 1px 2px rgba(16, 26, 36, .06), 0 6px 20px -12px rgba(16, 26, 36, .25);
-}
-@media (prefers-color-scheme: dark){body[data-view="stmts"]{
-    --bg: #0d1319;
-    --surface: #151d26;
-    --surface-2: #1b2530;
-    --ink: #e8edf2;
-    --muted: #93a2b1;
-    --line: #26323f;
-    --in: #4cc79a;
-    --in-bg: #12362a;
-    --out: #f0867a;
-    --out-bg: #3d1f1b;
-    --accent: #7aa7f0;
-    --warn-bg: #3b2d0f;
-    --warn: #f1c46b;
-    --shadow: none;
-  }}
-*{ box-sizing: border-box; }
-html{ -webkit-text-size-adjust: 100%; }
-body[data-view="stmts"]{
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font: 400 1rem/1.5 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-variant-numeric: tabular-nums;
-}
-#stmts a{ color: inherit; text-decoration: none; }
-#stmts button{ font: inherit; color: inherit; }
-:focus-visible{ outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
-#stmts .wrap{ max-width: 1000px; margin: 0 auto; padding: 24px 16px 64px; }
-#stmts .bar{ display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0 20px; }
-#stmts .brand{ font-weight: 600; font-size: 1.0625rem; letter-spacing: -.01em; }
-#stmts .who{ display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: .875rem; min-width: 0; }
-#stmts .who span{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#stmts .link-btn{ background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; cursor: pointer; color: var(--ink); }
-#stmts .link-btn:hover{ background: var(--surface); }
-#stmts h1{ font-size: 1.875rem; line-height: 1.15; letter-spacing: -.02em; font-weight: 600; margin: 8px 0 4px; }
-#stmts .sub{ color: var(--muted); margin: 0 0 24px; }
-#stmts .crumbs{ display: flex; flex-wrap: wrap; gap: 6px; color: var(--muted); font-size: .9375rem; margin-bottom: 8px; }
-#stmts .crumbs a{ color: var(--accent); }
-#stmts .crumbs a:hover{ text-decoration: underline; }
-#stmts .grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
-#stmts .inst{ display: flex; flex-direction: column; gap: 16px; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); transition: transform .15s ease, border-color .15s ease; }
-#stmts .inst:hover{ transform: translateY(-2px); border-color: var(--accent); }
-#stmts .logo{ flex: none; width: 64px; height: 64px; border-radius: 16px; background: #fff; border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden; }
-#stmts .logo img{ width: 40px; height: 40px; object-fit: contain; }
-#stmts .logo.big{ width: 72px; height: 72px; }
-#stmts .logo.big img{ width: 48px; height: 48px; }
-#stmts .monogram{ font-weight: 600; font-size: 1.375rem; color: #26323f; }
-#stmts .inst h2{ margin: 0; font-size: 1.1875rem; letter-spacing: -.01em; font-weight: 600; }
-#stmts .meta{ color: var(--muted); font-size: .9375rem; margin: 2px 0 0; display: flex; flex-wrap: wrap; gap: 4px 14px; }
-#stmts .head{ display: flex; align-items: center; gap: 18px; margin-bottom: 20px; }
-#stmts .head h1{ margin: 0; }
-#stmts .controls{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-#stmts .chips{ display: flex; flex-wrap: wrap; gap: 8px; }
-#stmts .chip{ border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-size: .9375rem; }
-#stmts .chip[aria-pressed="true"]{ background: var(--ink); color: var(--bg); border-color: var(--ink); }
-#stmts .check{ display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: .9375rem; cursor: pointer; }
-#stmts .check input{ width: 18px; height: 18px; accent-color: var(--accent); }
-#stmts .search{ flex: 1 1 220px; max-width: 360px; padding: 9px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
-#stmts .list{ background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
-#stmts .cols,#stmts .stmt{ display: grid; grid-template-columns: minmax(180px, 1.5fr) minmax(90px, 1fr) 118px 118px 130px; gap: 16px; align-items: center; padding: 14px 20px; }
-#stmts .cols{ color: var(--muted); font-size: .8125rem; border-bottom: 1px solid var(--line); background: var(--surface-2); padding-top: 10px; padding-bottom: 10px; }
-#stmts .stmt{ border-bottom: 1px solid var(--line); }
-#stmts .stmt:last-child{ border-bottom: 0; }
-#stmts .stmt:hover{ background: var(--surface-2); }
-#stmts .stmt .period{ font-weight: 500; }
-#stmts .stmt .acct{ color: var(--muted); font-size: .875rem; }
-#stmts .r{ text-align: right; }
-#stmts .in{ color: var(--in); }
-#stmts .out{ color: var(--out); }
-#stmts .flow{ display: grid; gap: 4px; }
-#stmts .flow i{ display: block; height: 6px; border-radius: 3px; min-width: 2px; }
-#stmts .flow .fin{ background: var(--in); }
-#stmts .flow .fout{ background: var(--out); }
-#stmts .tick{ display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--in); margin-right: 8px; }
-#stmts .tick.bad{ background: var(--out); }
-#stmts .summary{ display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin: 16px 0; }
-#stmts .stat{ padding: 16px 20px; border-right: 1px solid var(--line); min-width: 0; }
-#stmts .stat:last-child{ border-right: 0; }
-#stmts .stat .k{ color: var(--muted); font-size: .875rem; }
-#stmts .stat .v{ font-size: 1.375rem; font-weight: 600; letter-spacing: -.01em; margin-top: 2px; overflow-wrap: anywhere; }
-#stmts .badges{ display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
-#stmts .badge{ display: inline-flex; align-items: center; gap: 6px; font-size: .875rem; padding: 4px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
-#stmts .badge.ok{ background: var(--in-bg); color: var(--in); border-color: transparent; }
-#stmts .badge.bad{ background: var(--warn-bg); color: var(--warn); border-color: transparent; }
-#stmts .tablebox{ background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
-#stmts .tx{ width: 100%; border-collapse: collapse; }
-#stmts .tx th{ text-align: left; font-weight: 500; color: var(--muted); font-size: .8125rem; padding: 10px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
-#stmts .tx th.num,#stmts .tx td.num{ text-align: right; }
-#stmts .tx td{ padding: 11px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
-#stmts .tx tr:last-child td{ border-bottom: 0; }
-#stmts .tx td.date{ white-space: nowrap; color: var(--muted); font-size: .9375rem; }
-#stmts .tx td.desc{ overflow-wrap: anywhere; }
-#stmts .tx tr.internal td{ color: var(--muted); }
-#stmts .tx tr.internal td.amt{ color: var(--muted); }
-#stmts .tag{ display: inline-block; margin-left: 8px; font-size: .75rem; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); vertical-align: 1px; white-space: nowrap; }
-#stmts .note{ color: var(--muted); font-size: .8125rem; display: block; }
-#stmts .foot{ color: var(--muted); font-size: .9375rem; margin: 12px 4px 0; }
-#stmts .center{ min-height: 60vh; display: grid; place-content: center; text-align: center; gap: 14px; padding: 24px; }
-#stmts .center p{ margin: 0; color: var(--muted); max-width: 420px; }
-#stmts .btn{ background: var(--ink); color: var(--bg); border: 0; border-radius: 10px; padding: 11px 22px; font-weight: 500; cursor: pointer; justify-self: center; }
-#stmts .btn:hover{ opacity: .9; }
-#stmts .skeleton{ height: 76px; border-radius: var(--radius); background: linear-gradient(90deg, var(--surface) 0%, var(--surface-2) 50%, var(--surface) 100%); background-size: 200% 100%; animation: sh 1.4s linear infinite; }
-@keyframes sh{ to { background-position: -200% 0; } }
-@media (prefers-reduced-motion: reduce){#stmts .skeleton{ animation: none; }
-#stmts .inst{ transition: none; }
-#stmts .inst:hover{ transform: none; }}
-@media (max-width: 760px){#stmts h1{ font-size: 1.625rem; }
-#stmts .cols{ display: none; }
-#stmts .stmt{ grid-template-columns: 1fr 1fr; gap: 6px 12px; padding: 14px 16px; }
-#stmts .stmt .c-period{ grid-column: 1 / -1; }
-#stmts .stmt .flow{ grid-column: 1 / -1; }
-#stmts .stmt .c-in::before{ content: "In "; color: var(--muted); }
-#stmts .stmt .c-out::before{ content: "Out "; color: var(--muted); }
-#stmts .stmt .c-close{ grid-column: 1 / -1; text-align: left; color: var(--muted); font-size: .9375rem; }
-#stmts .stmt .c-close::before{ content: "Closing "; }
-#stmts .r{ text-align: left; }
-#stmts .stmt .c-out{ text-align: right; }
-#stmts .summary{ grid-template-columns: 1fr 1fr; }
-#stmts .stat:nth-child(2){ border-right: 0; }
-#stmts .stat:nth-child(-n+2){ border-bottom: 1px solid var(--line); }
-#stmts .tx thead{ display: none; }
-#stmts .tx,#stmts .tx tbody{ display: block; }
-#stmts .tx tr{ display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
-#stmts .tx tr:last-child{ border-bottom: 0; }
-#stmts .tx td{ display: block; padding: 0; border: 0; }
-#stmts .tx td.date{ grid-column: 1 / -1; font-size: .8125rem; }
-#stmts .tx td.amt{ grid-column: 2; grid-row: 2; text-align: right; font-weight: 500; }
-#stmts .tx td.bal{ grid-column: 1 / -1; text-align: left; color: var(--muted); font-size: .8125rem; }
-#stmts .tx td.bal::before{ content: "Balance "; }}
-/* ===== Shared shell ===== */
-
-body[data-view="receipts"] { --fg: var(--text); --panel: var(--card); }
-body[data-view="stmts"] { --fg: var(--ink); --panel: var(--surface); }
-.topnav { max-width: 1000px; margin: 0 auto; padding: 12px 16px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.tabs { display: flex; gap: 6px; }
-.tab { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; box-sizing: border-box; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); text-decoration: none; }
-.tab[hidden] { display: none; }
-.tab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
-.tab:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
-.tab[aria-current="page"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
-.navacct { display: flex; align-items: center; gap: 10px; min-width: 0; color: var(--muted); font-size: .875rem; }
-.navemail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.so { font: inherit; font-size: .875rem; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
-.gate { text-align: center; padding: 72px 16px; }
-.gbtn { font: inherit; padding: 11px 22px; border-radius: 10px; border: 0; background: var(--fg); color: var(--bg); cursor: pointer; }
-
+body{ --bg:#f6f7f9; --card:#fff; --fg:#1a1d21; --panel:#fff; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; margin:0; font:15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--fg); }
+@media (prefers-color-scheme: dark){ body{ --bg:#111418; --card:#1b1f25; --fg:#e8eaed; --panel:#1b1f25; --muted:#9aa3af; --line:#2c323a; --accent:#6ea0ff; } }
+main{ max-width:820px; margin:0 auto; padding:16px; }
+h1{ font-size:20px; margin:8px 0 16px; }
+.muted{ color:var(--muted); }
+.center{ text-align:center; padding:56px 16px; }
+.modules{ display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:12px; }
+.card{ display:flex; align-items:center; gap:14px; padding:16px; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--fg); text-decoration:none; }
+.card:hover{ border-color:var(--accent); }
+.card svg{ flex:none; width:28px; height:28px; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; }
+.card b{ display:block; font-size:16px; }
+.card span{ color:var(--muted); font-size:13px; }
+.retry{ font:inherit; margin-top:12px; padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--fg); cursor:pointer; }
 </style>
 </head>
-<body data-view="receipts">
+<body>
 <div class="topnav" id="topnav" hidden>
-  <nav class="tabs" aria-label="Sections">
-    <a id="tab-receipts" class="tab" href="#/receipts" aria-label="Receipts" title="Receipts">
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v18"/><path d="M16.5 7.5C15.8 6.4 14.2 5.8 12 5.8c-2.6 0-4.1 1.1-4.1 2.8 0 4.2 8.2 1.9 8.2 6.1 0 1.7-1.6 3.3-4.1 3.3-2.3 0-4.1-.8-5-2.1"/></svg>
-    </a>
-    <a id="tab-stmts" class="tab" href="#/st" aria-label="Statements" title="Statements" hidden>
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 9.5l9-5.5 9 5.5z"/><path d="M5.5 12.5v5M9.5 12.5v5M14.5 12.5v5M18.5 12.5v5"/><path d="M3.5 20.5h17"/></svg>
-    </a>
-  </nav>
+  <span></span>
   <div class="navacct">
     <span id="who" class="navemail"></span>
     <button id="signout" class="so">Sign out</button>
@@ -239,522 +37,58 @@ body[data-view="stmts"] { --fg: var(--ink); --panel: var(--surface); }
   <button id="google" class="gbtn">Sign in with Google</button>
 </section>
 
-<div id="receipts" hidden>
-<main>
-  <section id="message" class="center muted" hidden></section>
-
-  <section id="app" hidden>
-    <div class="filters">
-      <input id="q" type="search" placeholder="Search shop or item">
-      <select id="month"></select>
-    </div>
-    <div class="chartcard">
-      <span class="muted">Spending, last 12 months (tap a bar to filter)</span>
-      <div id="chart" class="chart" role="group" aria-label="Monthly spending, last 12 months"></div>
-    </div>
-    <div class="stats">
-      <div class="stat"><span class="muted">Receipts</span><b id="count">0</b></div>
-      <div class="stat"><span class="muted">Total spent</span><b id="total">£0.00</b></div>
-    </div>
-    <div id="list"></div>
-    <button id="more" hidden>Load more</button>
-  </section>
+<main id="home" hidden>
+  <h1>My Life</h1>
+  <p id="message" class="muted center" hidden></p>
+  <nav id="modules" class="modules" aria-label="Modules">
+    <a id="m-receipts" class="card" href="receipts.html" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v18"/><path d="M16.5 7.5C15.8 6.4 14.2 5.8 12 5.8c-2.6 0-4.1 1.1-4.1 2.8 0 4.2 8.2 1.9 8.2 6.1 0 1.7-1.6 3.3-4.1 3.3-2.3 0-4.1-.8-5-2.1"/></svg>
+      <div><b>Receipts</b><span>Spending and receipt breakdowns</span></div>
+    </a>
+    <a id="m-stmts" class="card" href="statements.html" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 9.5l9-5.5 9 5.5z"/><path d="M5.5 12.5v5M9.5 12.5v5M14.5 12.5v5M18.5 12.5v5"/><path d="M3.5 20.5h17"/></svg>
+      <div><b>Statements</b><span>Bank, card and savings statements</span></div>
+    </a>
+  </nav>
 </main>
-</div>
 
-<div id="stmts" hidden>
-  <div class="wrap" id="stapp"></div>
-</div>
-
+<script src="shared.js"></script>
 <script>
-// Public values only. NEVER put the service_role key in this file.
-const SUPABASE_URL = 'https://kzqpannznfinwmyuqoio.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_ywCVFBnY8ypFA1yaWYrq-Q_EVsUzNFM';
-const DEMO = new URLSearchParams(location.search).has('demo');   // ?demo: statements with invented data, no sign-in
-const db = DEMO ? null : supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { flowType: 'pkce', persistSession: true, detectSessionInUrl: true } });
-
-/* ================= Receipts ================= */
-const Receipts = (() => {
-// Public values only. NEVER put the service_role key in this file.
-const $ = id => document.getElementById(id);
-const show = (id, on) => { $(id).hidden = !on; };
-const el = (tag, cls, text) => {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  if (text != null) e.textContent = text;   // textContent only: receipt text is never treated as HTML
-  return e;
-};
-const num = v => (typeof v === 'number' && isFinite(v)) ? v : (parseFloat(v) || 0);
-const money = (v, cur) => {
-  try { return new Intl.NumberFormat('en-GB', { style:'currency', currency: cur || 'GBP' }).format(num(v)); }
-  catch { return (cur || '') + ' ' + num(v).toFixed(2); }
-};
-
-const PAGE = 10;
-let receipts = [];
-let shown = PAGE;
-
-$('q').oninput = () => { shown = PAGE; render(); };
-$('month').onchange = () => { shown = PAGE; render(); };
-$('more').onclick = () => { shown += PAGE; render(); };
-
-let loaded = false;
-async function open() {
-  if (loaded) return;
-  if (DEMO) return say('Demo mode: receipts are not loaded.');
-  say('Loading\u2026');
-  try {
-    receipts = await loadAll();
-  } catch (e) {
-    return say('Could not load receipts: ' + (e.message || e));
-  }
-  if (!receipts.length) return say('This Google account is not on the family list.');
-  loaded = true;
-  show('message', false);
-  buildMonths();
-  shown = PAGE;
-  show('app', true);
-  render();
-}
-function reset() { loaded = false; receipts = []; show('app', false); show('message', false); }
-
-function say(text) { $('message').textContent = text; show('message', true); }
-
-async function loadAll() {
-  const out = [], page = 1000;
-  for (let from = 0; ; from += page) {
-    const { data, error } = await db.from('receipts').select('id,data').order('id').range(from, from + page - 1);
-    if (error) throw error;
-    out.push(...data);
-    if (data.length < page) break;
-  }
-  return out
-    .map(r => ({ ...(r.data || {}), id: r.id, raw: r.data }))
-    .sort((a, b) => String(b.purchase_date || '').localeCompare(String(a.purchase_date || '')) || b.id - a.id);
-}
-
-function buildMonths() {
-  const months = [...new Set(receipts.map(r => String(r.purchase_date || '').slice(0, 7)).filter(Boolean))].sort().reverse();
-  const sel = $('month');
-  sel.replaceChildren(new Option('All months', ''));
-  months.forEach(m => sel.add(new Option(m, m)));
-}
-
-function last12() {
-  const now = new Date(), out = [];
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    out.push({ key: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'),
-               label: d.toLocaleString('en-GB', { month: 'short' }),
-               long: d.toLocaleString('en-GB', { month: 'long', year: 'numeric' }), total: 0 });
-  }
-  return out;
-}
-const short = v => v >= 1000 ? '£' + (v / 1000).toFixed(1) + 'k' : '£' + Math.round(v);
-
-function drawChart() {
-  const months = last12();
-  const idx = Object.fromEntries(months.map((m, i) => [m.key, i]));
-  for (const r of receipts) {
-    const s = r.summary || {};
-    const i = idx[String(r.purchase_date || '').slice(0, 7)];
-    if (i != null && (s.currency || 'GBP') === 'GBP') months[i].total += num(s.balance_due);
-  }
-  const max = Math.max(1, ...months.map(m => m.total));
-  const picked = $('month').value;
-  const chart = $('chart');
-  chart.replaceChildren();
-  chart.classList.toggle('picked', months.some(m => m.key === picked));
-  for (const m of months) {
-    const b = el('button', 'col' + (m.key === picked ? ' on' : ''));
-    b.title = m.long + ': ' + money(m.total, 'GBP');
-    b.setAttribute('aria-label', b.title);
-    const bar = el('span', 'bar');
-    bar.style.height = Math.round(100 * m.total / max) + 'px';
-    b.append(el('span', 'val', m.total ? short(m.total) : ''), bar, el('span', 'lab', m.label));
-    b.onclick = () => {
-      const sel = $('month');
-      sel.value = (sel.value === m.key) ? '' : m.key;
-      if (sel.selectedIndex < 0) sel.value = '';   // month with no receipts
-      shown = PAGE; render();
-    };
-    chart.append(b);
-  }
-}
-
-function render() {
-  drawChart();
-  const q = $('q').value.trim().toLowerCase();
-  const m = $('month').value;
-  const rows = receipts.filter(r => {
-    if (m && !String(r.purchase_date || '').startsWith(m)) return false;
-    if (!q) return true;
-    const hay = [r.shop, r.store_location, ...(Array.isArray(r.items) ? r.items.map(i => i && i.name) : [])].join(' ').toLowerCase();
-    return hay.includes(q);
-  });
-
-  $('count').textContent = rows.length;
-  const gbp = rows.filter(r => ((r.summary || {}).currency || 'GBP') === 'GBP');
-  const total = gbp.reduce((s, r) => s + num((r.summary || {}).balance_due), 0);
-  $('total').textContent = money(total, 'GBP') + (gbp.length < rows.length ? ' (GBP only)' : '');
-
-  const list = $('list');
-  list.replaceChildren();
-  if (!rows.length) { $('more').hidden = true; return list.append(el('p', 'muted center', 'No receipts match.')); }
-
-  for (const r of rows.slice(0, shown)) {
-    const s = r.summary || {};
-    const d = el('details');
-    const sum = el('summary');
-    sum.append(el('span', 'date', r.purchase_date || '—'), el('span', 'shop', r.shop || 'Unknown'), el('span', 'amt', money(s.balance_due, s.currency)));
-    d.append(sum);
-
-    const body = el('div', 'body');
-    const meta = [r.store_location, r.purchase_time, s.payment_method].filter(Boolean).join(' · ');
-    if (meta) body.append(el('p', 'muted', meta));
-    d.append(body);
-    d.addEventListener('toggle', () => {           // breakdown is built only when a row is first opened
-      if (!d.open || body.querySelector('table')) return;
-      const t = el('table');
-      for (const i of (Array.isArray(r.items) ? r.items : [])) {
-        if (!i) continue;
-        const tr = el('tr');
-        const qty = num(i.qty) && num(i.qty) !== 1 ? ' × ' + i.qty : '';
-        tr.append(el('td', null, (i.name || 'Item') + qty), el('td', 'n', money(i.net_total != null ? i.net_total : i.line_total, s.currency)));
-        t.append(tr);
-      }
-      const link = el('a', 'jsonlink', 'json');
-      link.href = '#';
-      link.setAttribute('aria-expanded', 'false');
-      const pre = el('pre', null, JSON.stringify(r.raw, null, 2));
-      pre.hidden = true;
-      link.onclick = e => {
-        e.preventDefault();
-        pre.hidden = !pre.hidden;
-        link.textContent = pre.hidden ? 'json' : 'hide json';
-        link.setAttribute('aria-expanded', String(!pre.hidden));
-      };
-      body.append(t, link, pre);
-    });
-    list.append(d);
-  }
-  const left = rows.length - Math.min(shown, rows.length);
-  $('more').hidden = left <= 0;
-  $('more').textContent = 'Load more (' + left + ' left)';
-}
-return { open, reset };
-})();
-
-/* ================= Statements ================= */
-const Stmts = (() => {
-'use strict';
-
-const app = document.getElementById('stapp');
-
-/* ---------- helpers ---------- */
-function h(tag, props, ...kids) {
-  const el = document.createElement(tag);
-  for (const [k, v] of Object.entries(props || {})) {
-    if (v == null || v === false) continue;
-    if (k === 'class') el.className = v;
-    else if (k === 'text') el.textContent = v;
-    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
-    else el.setAttribute(k, v === true ? '' : v);
-  }
-  for (const kid of kids.flat(Infinity)) {
-    if (kid == null || kid === false) continue;
-    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
-  }
-  return el;
-}
-const nf = {};
-function fmt(cur) { return nf[cur] || (nf[cur] = new Intl.NumberFormat('en-GB', { style: 'currency', currency: cur })); }
-const money = (minor, cur) => fmt(cur || 'GBP').format(Number(minor) / 100);
-const signed = (minor, cur) => (Number(minor) > 0 ? '+' : Number(minor) < 0 ? '\u2212' : '') + money(Math.abs(Number(minor)), cur);
-const parse = iso => new Date(iso + 'T00:00:00');
-const dShort = iso => parse(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-const dFull = iso => parse(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-function period(a, b) {
-  return parse(a).getFullYear() === parse(b).getFullYear() ? `${dShort(a)} \u2013 ${dFull(b)}` : `${dFull(a)} \u2013 ${dFull(b)}`;
-}
-function balance(type, minor, cur) {
-  const n = Number(minor);
-  if (type === 'credit_card') return n < 0 ? `${money(-n, cur)} owed` : n > 0 ? `${money(n, cur)} in credit` : money(0, cur);
-  return money(n, cur);
-}
-const store = {
-  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
-};
-
-/* ---------- logos: logo_url if set, else the bank's site icon, else initials ---------- */
-function logo(inst, big) {
-  const tile = h('div', { class: 'logo' + (big ? ' big' : ''), 'aria-hidden': 'true' });
-  const initials = inst.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
-  const mono = () => { tile.replaceChildren(h('span', { class: 'monogram', text: initials })); };
-  const src = inst.logo_url || (inst.domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(inst.domain)}&sz=128` : null);
-  if (!src) { mono(); return tile; }
-  const img = h('img', { src, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
-  img.addEventListener('error', mono);
-  img.addEventListener('load', () => { if (img.naturalWidth && img.naturalWidth < 24) mono(); });
-  tile.append(img);
-  return tile;
-}
-
-/* ---------- data access ---------- */
-let api;
-if (DEMO) {
-  api = makeDemoApi();
-} else {
-  const must = ({ data, error }) => { if (error) throw error; return data; };
-  api = {
-    institutions: async () => must(await db.from('fin_institution_overview').select('*').order('sort_order')),
-    institution: async id => must(await db.from('fin_institution_overview').select('*').eq('id', id).single()),
-    statements: async instId => must(await db.from('fin_statement_summary').select('*').eq('institution_id', instId).order('period_end', { ascending: false })),
-    statement: async id => must(await db.from('fin_statement_summary').select('*').eq('statement_id', id).single()),
-    transactions: async id => must(await db.from('fin_transactions')
-      .select('id,line_no,txn_date,posted_date,description,amount_minor,balance_after_minor,txn_type,is_internal_transfer,foreign_currency,foreign_amount_minor,fx_rate,notes')
-      .eq('statement_id', id).order('line_no'))
-  };
-}
-
-/* ---------- shell ---------- */
-function shell(...content) { app.replaceChildren(...content); window.scrollTo(0, 0); }
-function loading() {
-  app.replaceChildren(h('div', { class: 'grid' }, [1, 2, 3].map(() => h('div', { class: 'skeleton' }))));
-}
-function failure(err, retry) {
-  console.error(err);
-  app.replaceChildren(h('div', { class: 'center' },
-    h('h1', null, 'Could not load this page'),
-    h('p', null, (err && err.message) || 'Something went wrong while reading the database.'),
-    h('button', { class: 'btn', onclick: retry }, 'Try again')));
-}
-function renderNoAccess() {
-  app.replaceChildren(h('div', { class: 'center' },
-    h('h1', null, 'No access'),
-    h('p', null, 'This Google account is not the owner of these statements.')));
-}
-
-/* ---------- views ---------- */
-async function viewHome() {
-  loading();
-  const list = await api.institutions();
-  if (!list.length) return renderNoAccess();
-  const totalStmts = list.reduce((n, i) => n + Number(i.statement_count), 0);
-  shell(
-    h('h1', null, 'Statements'),
-    h('p', { class: 'sub' }, `${totalStmts} statements from ${list.length} institutions. Choose one to see its statements.`),
-    h('div', { class: 'grid' }, list.map(i =>
-      h('a', { class: 'inst', href: `#/st/i/${i.id}` },
-        logo(i, false),
-        h('div', null,
-          h('h2', null, i.name),
-          h('p', { class: 'meta' },
-            h('span', null, `${i.account_count} ${i.account_count == 1 ? 'account' : 'accounts'}`),
-            h('span', null, `${i.statement_count} statements`)),
-          i.last_period_end ? h('p', { class: 'meta' }, h('span', null, `${dFull(i.first_period_start)} to ${dFull(i.last_period_end)}`)) : null)))));
-}
-
-async function viewInstitution(id) {
-  loading();
-  const [inst, stmts] = await Promise.all([api.institution(id), api.statements(id)]);
-  const accounts = [...new Map(stmts.map(s => [s.account_id, s])).values()];
-  let accountFilter = null;
-  let leaveOut = store.get('leaveOutTransfers', false);
-
-  const listBox = h('div', { class: 'list' });
-  const chips = h('div', { class: 'chips' });
-
-  function accountLabel(s) { return s.product + (s.last4 ? ` ending ${s.last4}` : ''); }
-
-  function paint() {
-    const rows = stmts.filter(s => accountFilter == null || s.account_id === accountFilter);
-    const inOf = s => Number(leaveOut ? s.ext_in_minor : s.money_in_minor);
-    const outOf = s => Number(leaveOut ? s.ext_out_minor : s.money_out_minor);
-    const max = Math.max(1, ...rows.map(s => Math.max(inOf(s), outOf(s))));
-    listBox.replaceChildren(
-      h('div', { class: 'cols' }, h('span', null, 'Statement'), h('span', null, 'In and out'), h('span', { class: 'r' }, 'Money in'), h('span', { class: 'r' }, 'Money out'), h('span', { class: 'r' }, 'Closing balance')),
-      ...(rows.length ? rows.map(s => h('a', { class: 'stmt', href: `#/st/s/${s.statement_id}` },
-        h('div', { class: 'c-period' },
-          h('div', { class: 'period' }, h('span', { class: 'tick' + (Number(s.diff_minor) === 0 ? '' : ' bad'), title: Number(s.diff_minor) === 0 ? 'Balances tie out' : 'Balances do not tie out' }), period(s.period_start, s.period_end)),
-          accounts.length > 1 ? h('div', { class: 'acct' }, accountLabel(s)) : null),
-        h('div', { class: 'flow', 'aria-hidden': 'true' },
-          h('i', { class: 'fin', style: `width:${(inOf(s) / max * 100).toFixed(1)}%` }),
-          h('i', { class: 'fout', style: `width:${(outOf(s) / max * 100).toFixed(1)}%` })),
-        h('div', { class: 'r in c-in' }, money(inOf(s), s.currency)),
-        h('div', { class: 'r out c-out' }, money(outOf(s), s.currency)),
-        h('div', { class: 'r c-close' }, balance(s.account_type, s.closing_balance_minor, s.currency))))
-        : [h('div', { class: 'center' }, h('p', null, 'No statements have been imported for this institution yet.'))]));
-    chips.replaceChildren(...(accounts.length > 1 ? [
-      h('button', { class: 'chip', 'aria-pressed': String(accountFilter == null), onclick: () => { accountFilter = null; paint(); } }, 'All accounts'),
-      ...accounts.map(a => h('button', { class: 'chip', 'aria-pressed': String(accountFilter === a.account_id), onclick: () => { accountFilter = a.account_id; paint(); } }, accountLabel(a)))
-    ] : []));
-  }
-
-  const toggle = h('label', { class: 'check' },
-    h('input', { type: 'checkbox', ...(leaveOut ? { checked: '' } : {}), onchange: e => { leaveOut = e.target.checked; store.set('leaveOutTransfers', leaveOut); paint(); } }),
-    'Leave out transfers between my own accounts');
-
-  shell(
-    h('nav', { class: 'crumbs', 'aria-label': 'Breadcrumb' }, h('a', { href: '#/st' }, 'Institutions'), h('span', null, '/'), h('span', null, inst.name)),
-    h('div', { class: 'head' }, logo(inst, true), h('div', null, h('h1', null, inst.name),
-      h('p', { class: 'meta' }, h('span', null, `${inst.statement_count} statements, newest first`)))),
-    h('div', { class: 'controls' }, chips, toggle),
-    listBox);
-  paint();
-}
-
-async function viewStatement(id) {
-  loading();
-  const sum = await api.statement(id);
-  const [inst, txns] = await Promise.all([api.institution(sum.institution_id), api.transactions(id)]);
-  const cur = sum.currency;
-  let query = '';
-  let hideInternal = store.get('hideInternalInTxns', false);
-
-  const tbody = h('tbody');
-  const foot = h('p', { class: 'foot', 'aria-live': 'polite' });
-
-  function paint() {
-    const q = query.trim().toLowerCase();
-    const rows = txns.filter(t => (!hideInternal || !t.is_internal_transfer) && (!q || t.description.toLowerCase().includes(q)));
-    tbody.replaceChildren(...rows.map(t => {
-      const amt = Number(t.amount_minor);
-      return h('tr', { class: t.is_internal_transfer ? 'internal' : '' },
-        h('td', { class: 'date' }, dShort(t.txn_date)),
-        h('td', { class: 'desc' },
-          t.description,
-          t.is_internal_transfer ? h('span', { class: 'tag', title: 'Moves money between your own accounts' }, 'own account') : null,
-          t.txn_type === 'fee' ? h('span', { class: 'tag' }, 'fee') : null,
-          t.txn_type === 'refund' ? h('span', { class: 'tag' }, 'refund') : null,
-          t.foreign_currency ? h('span', { class: 'note' }, `${money(t.foreign_amount_minor, t.foreign_currency)} at ${t.fx_rate}${t.notes ? `, ${t.notes}` : ''}`) : (t.notes ? h('span', { class: 'note' }, t.notes) : null)),
-        h('td', { class: 'num amt ' + (amt > 0 ? 'in' : 'out') }, signed(amt, cur)),
-        h('td', { class: 'num bal' }, t.balance_after_minor == null ? '' : money(t.balance_after_minor, cur)));
-    }));
-    const tin = rows.reduce((n, t) => n + (Number(t.amount_minor) > 0 ? Number(t.amount_minor) : 0), 0);
-    const tout = rows.reduce((n, t) => n + (Number(t.amount_minor) < 0 ? -Number(t.amount_minor) : 0), 0);
-    foot.textContent = rows.length
-      ? `Showing ${rows.length} of ${txns.length} transactions. Money in ${money(tin, cur)}, money out ${money(tout, cur)}.`
-      : 'No transactions match.';
-  }
-
-  const hasBalance = txns.some(t => t.balance_after_minor != null);
-  const d = sum.details || {};
-  const chipsInfo = [];
-  if (d.credit_limit_minor != null) chipsInfo.push(`Credit limit ${money(d.credit_limit_minor, cur)}`);
-  if (d.minimum_payment_minor != null) chipsInfo.push(`Minimum payment ${money(d.minimum_payment_minor, cur)}`);
-  if (d.payment_due_date) chipsInfo.push(`Due ${dFull(d.payment_due_date)}`);
-  if (d.apr_simple != null) chipsInfo.push(`Interest ${d.apr_simple}% a year`);
-  if (d.aer != null) chipsInfo.push(`AER ${d.aer}%`);
-  if (d.interest_charged_minor != null) chipsInfo.push(`Interest charged ${money(d.interest_charged_minor, cur)}`);
-  if (d.avios_earned != null) chipsInfo.push(`${d.avios_earned} Avios earned`);
-
-  const ties = Number(sum.diff_minor) === 0;
-
-  shell(
-    h('nav', { class: 'crumbs', 'aria-label': 'Breadcrumb' },
-      h('a', { href: '#/st' }, 'Institutions'), h('span', null, '/'),
-      h('a', { href: `#/st/i/${inst.id}` }, inst.name), h('span', null, '/'),
-      h('span', null, period(sum.period_start, sum.period_end))),
-    h('div', { class: 'head' }, logo(inst, true), h('div', null,
-      h('h1', null, period(sum.period_start, sum.period_end)),
-      h('p', { class: 'meta' }, h('span', null, sum.product + (sum.last4 ? ` ending ${sum.last4}` : '')), sum.holder_name ? h('span', null, sum.holder_name) : null))),
-    h('div', { class: 'summary' },
-      h('div', { class: 'stat' }, h('div', { class: 'k' }, 'Opening balance'), h('div', { class: 'v' }, balance(sum.account_type, sum.opening_balance_minor, cur))),
-      h('div', { class: 'stat' }, h('div', { class: 'k' }, 'Money in'), h('div', { class: 'v in' }, money(sum.money_in_minor, cur))),
-      h('div', { class: 'stat' }, h('div', { class: 'k' }, 'Money out'), h('div', { class: 'v out' }, money(sum.money_out_minor, cur))),
-      h('div', { class: 'stat' }, h('div', { class: 'k' }, 'Closing balance'), h('div', { class: 'v' }, balance(sum.account_type, sum.closing_balance_minor, cur)))),
-    h('div', { class: 'badges' },
-      h('span', { class: 'badge ' + (ties ? 'ok' : 'bad') }, ties ? 'Opening balance plus transactions equals closing balance' : `Does not tie out: off by ${money(Math.abs(Number(sum.diff_minor)), cur)}`),
-      chipsInfo.map(t => h('span', { class: 'badge' }, t))),
-    h('div', { class: 'controls' },
-      h('input', { class: 'search', type: 'search', placeholder: 'Search descriptions', 'aria-label': 'Search descriptions', oninput: e => { query = e.target.value; paint(); } }),
-      h('label', { class: 'check' },
-        h('input', { type: 'checkbox', ...(hideInternal ? { checked: '' } : {}), onchange: e => { hideInternal = e.target.checked; store.set('hideInternalInTxns', hideInternal); paint(); } }),
-        'Hide transfers between my own accounts')),
-    h('div', { class: 'tablebox' },
-      h('table', { class: 'tx' },
-        h('thead', null, h('tr', null,
-          h('th', null, 'Date'), h('th', null, 'Description'), h('th', { class: 'num' }, 'Amount'), h('th', { class: 'num' }, hasBalance ? 'Balance' : ''))),
-        tbody)),
-    foot);
-  paint();
-}
-
-/* ---------- entry points ---------- */
-async function open(path) {
-  const m = (path || '').match(/^\/(i|s)\/(\d+)$/);
-  try {
-    if (m && m[1] === 'i') await viewInstitution(Number(m[2]));
-    else if (m && m[1] === 's') await viewStatement(Number(m[2]));
-    else await viewHome();
-  } catch (err) { failure(err, () => open(path)); }
-}
-async function probe() {
-  try { return (await api.institutions()).length > 0; } catch (e) { return false; }
-}
-
-/* ---------- demo data (?demo=1): invented figures, no sign-in, nothing from the database ---------- */
-function makeDemoApi() {
-  const institutions = [
-    { id: 1, slug: 'northbank', name: 'Northbank', domain: null, logo_url: null, sort_order: 1, account_count: 2, statement_count: 3, first_period_start: '2026-06-01', last_period_end: '2026-08-31' },
-    { id: 2, slug: 'plumcard', name: 'Plum Card', domain: null, logo_url: null, sort_order: 2, account_count: 1, statement_count: 2, first_period_start: '2026-07-04', last_period_end: '2026-09-03' }
-  ];
-  const mk = (statement_id, institution_id, account_id, product, account_type, last4, ps, pe, open, close, details, tx) => {
-    const inn = tx.filter(t => t[3] > 0).reduce((n, t) => n + t[3], 0);
-    const out = -tx.filter(t => t[3] < 0).reduce((n, t) => n + t[3], 0);
-    const extIn = tx.filter(t => t[3] > 0 && !t[4]).reduce((n, t) => n + t[3], 0);
-    const extOut = -tx.filter(t => t[3] < 0 && !t[4]).reduce((n, t) => n + t[3], 0);
-    let bal = open;
-    const rows = tx.map((t, i) => { bal += t[3]; return { id: statement_id * 100 + i, line_no: i + 1, txn_date: t[0], posted_date: null, description: t[1], amount_minor: t[3], balance_after_minor: account_type === 'credit_card' ? null : bal, txn_type: t[2], is_internal_transfer: !!t[4], foreign_currency: null, notes: null }; });
-    return { sum: { statement_id, account_id, institution_id, account_slug: product, product, account_type, currency: 'GBP', last4, holder_name: 'A. Sample', period_start: ps, period_end: pe, opening_balance_minor: open, closing_balance_minor: close, money_in_minor: inn, money_out_minor: out, ext_in_minor: extIn, ext_out_minor: extOut, txn_count: tx.length, diff_minor: open + inn - out - close, details }, rows };
-  };
-  const data = [
-    mk(1, 1, 10, 'Current account', 'current', '1234', '2026-06-01', '2026-06-30', 120000, 299500, {}, [
-      ['2026-06-03', 'Greenfield Grocers', 'purchase', -5420], ['2026-06-05', 'Salary Acme Ltd', 'payment', 250000], ['2026-06-08', 'Gas & Power direct debit', 'direct_debit', -8800],
-      ['2026-06-12', 'Plum Card payment', 'payment', -60000, true], ['2026-06-19', 'Cafe Oval', 'purchase', -1240], ['2026-06-27', 'Refund Hardware Hut', 'refund', 4960]]),
-    mk(2, 1, 10, 'Current account', 'current', '1234', '2026-07-01', '2026-07-31', 299500, 417200, {}, [
-      ['2026-07-02', 'Greenfield Grocers', 'purchase', -6110], ['2026-07-05', 'Salary Acme Ltd', 'payment', 250000], ['2026-07-14', 'Plum Card payment', 'payment', -90000, true], ['2026-07-22', 'Bookshop Lane', 'purchase', -3190], ['2026-07-30', 'Water bill', 'direct_debit', -33000]]),
-    mk(3, 1, 11, 'Savings', 'savings', '5678', '2026-06-01', '2026-08-31', 500000, 512300, { aer: 3.4, interest_earned_minor: 2300 }, [
-      ['2026-06-15', 'Transfer in', 'payment', 10000, true], ['2026-08-31', 'Interest', 'interest', 2300]]),
-    mk(4, 2, 20, 'Plum Card', 'credit_card', '9012', '2026-07-04', '2026-08-03', -60000, -90000, { credit_limit_minor: 300000, minimum_payment_minor: 2500, payment_due_date: '2026-08-28', apr_simple: 24.9, interest_charged_minor: 0 }, [
-      ['2026-07-14', 'Payment, thank you', 'payment', 60000, true], ['2026-07-06', 'Harbour Ferries', 'purchase', -4200], ['2026-07-09', 'Market Hall', 'purchase', -7300], ['2026-07-21', 'Skyline Hotels', 'purchase', -76500], ['2026-08-03', 'Monthly fee', 'fee', -2000]]),
-    mk(5, 2, 20, 'Plum Card', 'credit_card', '9012', '2026-08-04', '2026-09-03', -90000, -45000, { credit_limit_minor: 300000, minimum_payment_minor: 2500, payment_due_date: '2026-09-28', apr_simple: 24.9, interest_charged_minor: 0 }, [
-      ['2026-08-20', 'Payment, thank you', 'payment', 90000, true], ['2026-08-08', 'Harbour Ferries', 'purchase', -2800], ['2026-08-30', 'Skyline Hotels', 'purchase', -40200], ['2026-09-03', 'Monthly fee', 'fee', -2000]])
-  ];
-  const wait = v => new Promise(r => setTimeout(() => r(v), 60));
-  return {
-    institutions: () => wait(institutions),
-    institution: id => wait(institutions.find(i => i.id === id)),
-    statements: id => wait(data.filter(d => d.sum.institution_id === id).map(d => d.sum).sort((a, b) => b.period_end.localeCompare(a.period_end))),
-    statement: id => wait(data.find(d => d.sum.statement_id === id).sum),
-    transactions: id => wait(data.find(d => d.sum.statement_id === id).rows)
-  };
-}
-
-return { open, probe };
-})();
-
-/* ================= Shell: sign-in, tabs, routing ================= */
 (() => {
-  const $ = id => document.getElementById(id);
-  const show = (id, on) => { $(id).hidden = !on; };
+  // Old bookmarks: index.html#/st/... and #/receipts now live on their own pages.
+  const h = location.hash;
+  if (/^#\/st(\/|$)/.test(h)) { location.replace('statements.html' + location.search + '#' + h.slice(4)); return; }
+  if (/^#\/receipts/.test(h)) { location.replace('receipts.html' + location.search); return; }
+
+  // Which modules can this account open? This only decides which links to show.
+  // It is not access control: each module page checks the session itself, and row-level security limits the data.
+  const probes = {
+    receipts: async () => { const { error, data } = await db.from('receipts').select('id').limit(1); return error ? null : data.length > 0; },
+    stmts: async () => { const { error, data } = await db.from('fin_institution_overview').select('id').limit(1); return error ? null : data.length > 0; }
+  };
+
+  const say = text => { $('message').textContent = text; show('message', true); };
   let session = null;
 
-  function view() { return /^#\/st(\/|$)/.test(location.hash) ? 'stmts' : 'receipts'; }
+  async function showModules() {
+    show('message', false);
+    $('m-receipts').hidden = $('m-stmts').hidden = true;
+    say('Checking what you can open…');
+    const [r, s] = DEMO ? [true, true] : await Promise.all([probes.receipts(), probes.stmts()]);   // demo: the receipts page just says it is not loaded
+    $('m-receipts').hidden = !r;
+    $('m-stmts').hidden = !s;
+    if (r === null && s === null) return retry('Could not check your access. Check your connection and try again.');
+    if (!r && !s) return say('This Google account has no modules available.');
+    show('message', false);
+  }
 
-  function route() {
-    if (!session) return;
-    const v = view();
-    document.body.dataset.view = v;
-    show('receipts', v === 'receipts');
-    show('stmts', v === 'stmts');
-    $('tab-receipts').toggleAttribute('aria-current', false);
-    $('tab-stmts').toggleAttribute('aria-current', false);
-    $(v === 'stmts' ? 'tab-stmts' : 'tab-receipts').setAttribute('aria-current', 'page');
-    if (v === 'receipts') Receipts.open();
-    else Stmts.open(location.hash.replace(/^#\/st/, ''));
+  function retry(text) {
+    say(text);
+    const b = document.createElement('button');
+    b.className = 'retry';
+    b.textContent = 'Try again';
+    b.onclick = showModules;
+    $('message').append(document.createElement('br'), b);
   }
 
   function onSession(s) {
@@ -763,23 +97,19 @@ return { open, probe };
     if (prev && s && prev.user.id === s.user.id) return;   // token refresh / tab refocus: leave the page as it is
     show('signin', !s);
     show('topnav', !!s);
-    show('receipts', false);
-    show('stmts', false);
-    Receipts.reset();
-    show('tab-stmts', false);
-    if (!s) { document.body.dataset.view = 'receipts'; return; }
+    show('home', !!s);
+    if (!s) return;
     $('who').textContent = s.user.email || '';
     if (location.search.includes('code=')) history.replaceState(null, '', location.pathname + location.hash);
-    Stmts.probe().then(ok => { if (session && session.user.id === s.user.id) show('tab-stmts', ok); });   // tab appears only for the owner
-    route();
+    showModules();
   }
 
-  window.addEventListener('hashchange', route);
   if (DEMO) {
+    document.querySelectorAll('.card').forEach(a => { a.href += location.search; });
     $('signout').hidden = true;
     onSession({ user: { id: 'demo', email: 'demo mode' } });
   } else {
-    $('google').onclick = () => db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
+    $('google').onclick = () => db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: appBase() } });
     $('signout').onclick = () => db.auth.signOut();
     db.auth.onAuthStateChange((_event, s) => { setTimeout(() => onSession(s), 0); });
   }
