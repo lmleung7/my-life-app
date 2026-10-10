@@ -208,7 +208,8 @@ function h(tag, props, ...kids) {
 }
 const nf = {};
 function fmt(cur) { return nf[cur] || (nf[cur] = new Intl.NumberFormat('en-GB', { style: 'currency', currency: cur })); }
-const money = (minor, cur) => fmt(cur || 'GBP').format(Number(minor) / 100);
+/* + 0 turns -0 into 0, so a zero amount never renders as "-£0.00" */
+const money = (minor, cur) => fmt(cur || 'GBP').format(Number(minor) / 100 + 0);
 const signed = (minor, cur) => (Number(minor) > 0 ? '+' : Number(minor) < 0 ? '\u2212' : '') + money(Math.abs(Number(minor)), cur);
 /* net = in - out, in minor units. Always carries a sign (+ or \u2212) as well as colour. */
 function netCell(inMinor, outMinor, cur, cls) {
