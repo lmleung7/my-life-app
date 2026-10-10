@@ -86,7 +86,7 @@ body[data-view="stmts"]{
 #stmts .check input{ width: 18px; height: 18px; accent-color: var(--accent); }
 #stmts .search{ flex: 1 1 220px; max-width: 360px; padding: 9px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
 #stmts .list{ background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
-#stmts .cols,#stmts .stmt{ display: grid; grid-template-columns: minmax(180px, 1.5fr) minmax(90px, 1fr) 118px 118px 130px; gap: 16px; align-items: center; padding: 14px 20px; }
+#stmts .cols,#stmts .stmt{ display: grid; grid-template-columns: minmax(180px, 1.5fr) minmax(90px, 1fr) 118px 118px 118px 130px; gap: 16px; align-items: center; padding: 14px 20px; }
 #stmts .cols{ color: var(--muted); font-size: .8125rem; border-bottom: 1px solid var(--line); background: var(--surface-2); padding-top: 10px; padding-bottom: 10px; }
 #stmts .stmt{ border-bottom: 1px solid var(--line); }
 #stmts .stmt:last-child{ border-bottom: 0; }
@@ -102,7 +102,7 @@ body[data-view="stmts"]{
 #stmts .flow .fout{ background: var(--out); }
 #stmts .tick{ display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--in); margin-right: 8px; }
 #stmts .tick.bad{ background: var(--out); }
-#stmts .summary{ display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin: 16px 0; }
+#stmts .summary{ display: grid; grid-template-columns: repeat(5, 1fr); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin: 16px 0; }
 #stmts .stat{ padding: 16px 20px; border-right: 1px solid var(--line); min-width: 0; }
 #stmts .stat:last-child{ border-right: 0; }
 #stmts .stat .k{ color: var(--muted); font-size: .875rem; }
@@ -123,6 +123,10 @@ body[data-view="stmts"]{
 #stmts .tx tr.internal td.amt{ color: var(--muted); }
 #stmts .tag{ display: inline-block; margin-left: 8px; font-size: .75rem; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); vertical-align: 1px; white-space: nowrap; }
 #stmts .note{ color: var(--muted); font-size: .8125rem; display: block; }
+#stmts .net.zero{ color: var(--muted); }
+#stmts .totals{ display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: flex-end; padding: 12px 20px; border-top: 1px solid var(--line); background: var(--surface-2); font-size: .9375rem; }
+#stmts .totals .k{ color: var(--muted); }
+#stmts .totals b{ font-weight: 600; }
 #stmts .foot{ color: var(--muted); font-size: .9375rem; margin: 12px 4px 0; }
 #stmts .center{ min-height: 60vh; display: grid; place-content: center; text-align: center; gap: 14px; padding: 24px; }
 #stmts .center p{ margin: 0; color: var(--muted); max-width: 420px; }
@@ -140,13 +144,16 @@ body[data-view="stmts"]{
 #stmts .stmt .flow{ grid-column: 1 / -1; }
 #stmts .stmt .c-in::before{ content: "In "; color: var(--muted); }
 #stmts .stmt .c-out::before{ content: "Out "; color: var(--muted); }
+#stmts .stmt .c-net::before{ content: "Net "; color: var(--muted); font-weight: 400; }
 #stmts .stmt .c-close{ grid-column: 1 / -1; text-align: left; color: var(--muted); font-size: .9375rem; }
 #stmts .stmt .c-close::before{ content: "Closing "; }
 #stmts .r{ text-align: left; }
 #stmts .stmt .c-out{ text-align: right; }
 #stmts .summary{ grid-template-columns: 1fr 1fr; }
-#stmts .stat:nth-child(2){ border-right: 0; }
-#stmts .stat:nth-child(-n+2){ border-bottom: 1px solid var(--line); }
+#stmts .stat:nth-child(even){ border-right: 0; }
+#stmts .stat:nth-child(-n+4){ border-bottom: 1px solid var(--line); }
+#stmts .stat:nth-child(5){ grid-column: 1 / -1; border-right: 0; }
+#stmts .totals{ justify-content: flex-start; padding: 12px 16px; }
 #stmts .tx thead{ display: none; }
 #stmts .tx,#stmts .tx tbody{ display: block; }
 #stmts .tx tr{ display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
@@ -203,6 +210,11 @@ const nf = {};
 function fmt(cur) { return nf[cur] || (nf[cur] = new Intl.NumberFormat('en-GB', { style: 'currency', currency: cur })); }
 const money = (minor, cur) => fmt(cur || 'GBP').format(Number(minor) / 100);
 const signed = (minor, cur) => (Number(minor) > 0 ? '+' : Number(minor) < 0 ? '\u2212' : '') + money(Math.abs(Number(minor)), cur);
+/* net = in - out, in minor units. Always carries a sign (+ or \u2212) as well as colour. */
+function netCell(inMinor, outMinor, cur, cls) {
+  const n = Number(inMinor) - Number(outMinor);
+  return h('div', { class: `r ${cls || ''} ${n > 0 ? 'in' : n < 0 ? 'out' : 'net zero'}`.trim() }, n === 0 ? money(0, cur) : signed(n, cur));
+}
 const parse = iso => new Date(iso + 'T00:00:00');
 const dShort = iso => parse(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 const dFull = iso => parse(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -288,6 +300,15 @@ async function viewHome() {
           i.last_period_end ? h('p', { class: 'meta' }, h('span', null, `${dFull(i.first_period_start)} to ${dFull(i.last_period_end)}`)) : null)))));
 }
 
+function totalsBar(rows, inOf, outOf) {
+  if (!rows.length) return h('span');
+  const byCur = new Map();
+  for (const s of rows) byCur.set(s.currency, (byCur.get(s.currency) || 0) + inOf(s) - outOf(s));
+  const label = byCur.size > 1 ? 'Net by currency' : 'Net for this selection';
+  return h('div', { class: 'totals', 'aria-live': 'polite' }, h('span', { class: 'k' }, label),
+    ...[...byCur].map(([cur, n]) => h('b', { class: n > 0 ? 'in' : n < 0 ? 'out' : 'net zero' }, n === 0 ? money(0, cur) : signed(n, cur))));
+}
+
 async function viewInstitution(id) {
   loading();
   const [inst, stmts] = await Promise.all([api.institution(id), api.statements(id)]);
@@ -306,7 +327,7 @@ async function viewInstitution(id) {
     const outOf = s => Number(leaveOut ? s.ext_out_minor : s.money_out_minor);
     const max = Math.max(1, ...rows.map(s => Math.max(inOf(s), outOf(s))));
     listBox.replaceChildren(
-      h('div', { class: 'cols' }, h('span', null, 'Statement'), h('span', null, 'In and out'), h('span', { class: 'r' }, 'Money in'), h('span', { class: 'r' }, 'Money out'), h('span', { class: 'r' }, 'Closing balance')),
+      h('div', { class: 'cols' }, h('span', null, 'Statement'), h('span', null, 'In and out'), h('span', { class: 'r' }, 'Money in'), h('span', { class: 'r' }, 'Money out'), h('span', { class: 'r' }, 'Net'), h('span', { class: 'r' }, 'Closing balance')),
       ...(rows.length ? rows.map(s => h('a', { class: 'stmt', href: `#/s/${s.statement_id}` },
         h('div', { class: 'c-period' },
           h('div', { class: 'period' }, h('span', { class: 'tick' + (Number(s.diff_minor) === 0 ? '' : ' bad'), title: Number(s.diff_minor) === 0 ? 'Balances tie out' : 'Balances do not tie out' }), period(s.period_start, s.period_end)),
@@ -316,8 +337,10 @@ async function viewInstitution(id) {
           h('i', { class: 'fout', style: `width:${(outOf(s) / max * 100).toFixed(1)}%` })),
         h('div', { class: 'r in c-in' }, money(inOf(s), s.currency)),
         h('div', { class: 'r out c-out' }, money(outOf(s), s.currency)),
+        netCell(inOf(s), outOf(s), s.currency, 'c-net'),
         h('div', { class: 'r c-close' }, balance(s.account_type, s.closing_balance_minor, s.currency))))
-        : [h('div', { class: 'center' }, h('p', null, 'No statements have been imported for this institution yet.'))]));
+        : [h('div', { class: 'center' }, h('p', null, 'No statements have been imported for this institution yet.'))]),
+      totalsBar(rows, inOf, outOf));
     chips.replaceChildren(...(accounts.length > 1 ? [
       h('button', { class: 'chip', 'aria-pressed': String(accountFilter == null), onclick: () => { accountFilter = null; paint(); } }, 'All accounts'),
       ...accounts.map(a => h('button', { class: 'chip', 'aria-pressed': String(accountFilter === a.account_id), onclick: () => { accountFilter = a.account_id; paint(); } }, accountLabel(a)))
@@ -367,7 +390,7 @@ async function viewStatement(id) {
     const tin = rows.reduce((n, t) => n + (Number(t.amount_minor) > 0 ? Number(t.amount_minor) : 0), 0);
     const tout = rows.reduce((n, t) => n + (Number(t.amount_minor) < 0 ? -Number(t.amount_minor) : 0), 0);
     foot.textContent = rows.length
-      ? `Showing ${rows.length} of ${txns.length} transactions. Money in ${money(tin, cur)}, money out ${money(tout, cur)}.`
+      ? `Showing ${rows.length} of ${txns.length} transactions. Money in ${money(tin, cur)}, money out ${money(tout, cur)}, net ${tin - tout === 0 ? money(0, cur) : signed(tin - tout, cur)}.`
       : 'No transactions match.';
   }
 
@@ -383,6 +406,7 @@ async function viewStatement(id) {
   if (d.avios_earned != null) chipsInfo.push(`${d.avios_earned} Avios earned`);
 
   const ties = Number(sum.diff_minor) === 0;
+  const netMinor = Number(sum.money_in_minor) - Number(sum.money_out_minor);
 
   shell(
     h('nav', { class: 'crumbs', 'aria-label': 'Breadcrumb' },
@@ -396,6 +420,7 @@ async function viewStatement(id) {
       h('div', { class: 'stat' }, h('div', { class: 'k' }, 'Opening balance'), h('div', { class: 'v' }, balance(sum.account_type, sum.opening_balance_minor, cur))),
       h('div', { class: 'stat' }, h('div', { class: 'k' }, 'Money in'), h('div', { class: 'v in' }, money(sum.money_in_minor, cur))),
       h('div', { class: 'stat' }, h('div', { class: 'k' }, 'Money out'), h('div', { class: 'v out' }, money(sum.money_out_minor, cur))),
+      h('div', { class: 'stat' }, h('div', { class: 'k' }, 'Net (in \u2212 out)'), h('div', { class: 'v ' + (netMinor > 0 ? 'in' : netMinor < 0 ? 'out' : 'net zero') }, netMinor === 0 ? money(0, cur) : signed(netMinor, cur))),
       h('div', { class: 'stat' }, h('div', { class: 'k' }, 'Closing balance'), h('div', { class: 'v' }, balance(sum.account_type, sum.closing_balance_minor, cur)))),
     h('div', { class: 'badges' },
       h('span', { class: 'badge ' + (ties ? 'ok' : 'bad') }, ties ? 'Opening balance plus transactions equals closing balance' : `Does not tie out: off by ${money(Math.abs(Number(sum.diff_minor)), cur)}`),

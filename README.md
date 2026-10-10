@@ -15,6 +15,8 @@ Google sign-in, then read-only views of data in Supabase, one page per module:
 | `statements.html` | Statements module, for the owner account only |
 | `shared.js`, `shared.css` | Supabase client, session guard and nav/base styles used by every page |
 
+The statement overview and detail views show a net total (money in − money out), always with a + or − sign. The overview adds one net total for the current selection, split per currency and never summed across currencies. It follows the "leave out transfers" toggle.
+
 Each module page checks the session itself and sends signed-out visitors back to `index.html`. Hiding a link on the landing page is convenience only: access is enforced by row-level security in the database, not by these pages.
 
 Old bookmarks (`index.html#/st/...`, `#/receipts`) redirect to the new pages. `?demo=1` shows the Statements module with invented data and no sign-in.
