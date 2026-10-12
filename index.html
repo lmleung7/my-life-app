@@ -60,6 +60,9 @@ h1{ font-size:20px; margin:8px 0 16px; }
   if (/^#\/st(\/|$)/.test(h)) { location.replace('statements.html' + location.search + '#' + h.slice(4)); return; }
   if (/^#\/receipts/.test(h)) { location.replace('receipts.html' + location.search); return; }
 
+  // Receipts opens by default. ?home=1 (the Home link on every module page) keeps you on this page.
+  const STAY = DEMO || new URLSearchParams(location.search).has('home');
+
   // Which modules can this account open? This only decides which links to show.
   // It is not access control: each module page checks the session itself, and row-level security limits the data.
   const probes = {
@@ -79,6 +82,7 @@ h1{ font-size:20px; margin:8px 0 16px; }
     $('m-stmts').hidden = !s;
     if (r === null && s === null) return retry('Could not check your access. Check your connection and try again.');
     if (!r && !s) return say('This Google account has no modules available.');
+    if (r && !STAY) { location.replace('receipts.html'); return; }   // message stays up while the page changes
     show('message', false);
   }
 

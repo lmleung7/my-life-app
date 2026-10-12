@@ -10,7 +10,7 @@ Google sign-in, then read-only views of data in Supabase, one page per module:
 
 | File | Role |
 |---|---|
-| `index.html` | Landing page: sign-in, checks which modules this account can open, links to them |
+| `index.html` | Landing page: sign-in, checks which modules this account can open. Goes straight to Receipts when it can; `index.html?home=1` (the Home link) shows the module cards instead |
 | `receipts.html` | Receipts module, for allowlisted family accounts |
 | `statements.html` | Statements module, for the owner account only |
 | `shared.js`, `shared.css` | Supabase client, session guard and nav/base styles used by every page |
