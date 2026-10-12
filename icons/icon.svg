@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<title>My Life</title>
+<rect width="512" height="512" rx="112" fill="#17153B"/>
+<g transform="translate(0,9)">
+<circle cx="256" cy="160" r="70" fill="#FF6B5B"/>
+<circle cx="347.3" cy="226.3" r="70" fill="#FFC94A"/>
+<circle cx="312.4" cy="333.7" r="70" fill="#2DC4B2"/>
+<circle cx="199.6" cy="333.7" r="70" fill="#8E75FF"/>
+<circle cx="164.7" cy="226.3" r="70" fill="#FF8FC7"/>
+<circle cx="256" cy="256" r="56" fill="#FFF7EA"/>
+<ellipse cx="237" cy="246" rx="7" ry="10" fill="#17153B"/>
+<ellipse cx="275" cy="246" rx="7" ry="10" fill="#17153B"/>
+<path d="M234 272 Q256 292 278 272" fill="none" stroke="#17153B" stroke-width="9" stroke-linecap="round"/>
+</g>
+</svg>
