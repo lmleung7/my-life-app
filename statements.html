@@ -77,6 +77,9 @@ body[data-view="stmts"]{
 #stmts .logo.big{ width: 72px; height: 72px; }
 #stmts .logo.big img{ width: 48px; height: 48px; }
 #stmts .monogram{ font-weight: 600; font-size: 1.375rem; color: #26323f; }
+#stmts .fy{ margin: 0 0 32px; }
+#stmts .fy-h{ display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0 0 12px; font-size: 1.25rem; letter-spacing: -.01em; font-weight: 600; }
+#stmts .fy-range{ color: var(--muted); font-size: .9375rem; font-weight: 400; }
 #stmts .inst h2{ margin: 0; font-size: 1.1875rem; letter-spacing: -.01em; font-weight: 600; }
 #stmts .meta{ color: var(--muted); font-size: .9375rem; margin: 2px 0 0; display: flex; flex-wrap: wrap; gap: 4px 14px; }
 #stmts .head{ display: flex; align-items: center; gap: 18px; margin-bottom: 20px; }
@@ -225,6 +228,14 @@ const dFull = iso => parse(iso).toLocaleDateString('en-GB', { day: 'numeric', mo
 function period(a, b) {
   return parse(a).getFullYear() === parse(b).getFullYear() ? `${dShort(a)} \u2013 ${dFull(b)}` : `${dFull(a)} \u2013 ${dFull(b)}`;
 }
+/* UK tax year: 6 April to 5 April. fyOf returns the calendar year it starts in (2025 = 2025-26).
+   A statement belongs to the tax year its period_end falls in. */
+function fyOf(iso) {
+  const d = parse(iso), m = d.getMonth();
+  return (m > 3 || (m === 3 && d.getDate() >= 6)) ? d.getFullYear() : d.getFullYear() - 1;
+}
+const fyLabel = y => `${y}–${String(y + 1).slice(2)}`;
+const fyRange = y => `6 Apr ${y} – 5 Apr ${y + 1}`;
 function balance(type, minor, cur) {
   const n = Number(minor);
   if (type === 'credit_card') return n < 0 ? `${money(-n, cur)} owed` : n > 0 ? `${money(n, cur)} in credit` : money(0, cur);
@@ -257,6 +268,7 @@ if (DEMO) {
   const must = ({ data, error }) => { if (error) throw error; return data; };
   api = {
     institutions: async () => must(await db.from('fin_institution_overview').select('*').order('sort_order')),
+    allStatements: async () => must(await db.from('fin_statement_summary').select('institution_id,account_id,period_start,period_end').limit(5000)),
     institution: async id => must(await db.from('fin_institution_overview').select('*').eq('id', id).single()),
     statements: async instId => must(await db.from('fin_statement_summary').select('*').eq('institution_id', instId).order('period_end', { ascending: false })),
     statement: async id => must(await db.from('fin_statement_summary').select('*').eq('statement_id', id).single()),
@@ -287,21 +299,47 @@ function renderNoAccess() {
 /* ---------- views ---------- */
 async function viewHome() {
   loading();
-  const list = await api.institutions();
+  const [list, stmts] = await Promise.all([api.institutions(), api.allStatements()]);
   if (!list.length) return renderNoAccess();
-  const totalStmts = list.reduce((n, i) => n + Number(i.statement_count), 0);
+
+  /* tax year -> institution id -> { count, accounts, first, last } */
+  const years = new Map();
+  for (const s of stmts) {
+    const fy = fyOf(s.period_end);
+    if (!years.has(fy)) years.set(fy, new Map());
+    const byInst = years.get(fy);
+    let e = byInst.get(s.institution_id);
+    if (!e) { e = { count: 0, accounts: new Set(), first: s.period_start, last: s.period_end }; byInst.set(s.institution_id, e); }
+    e.count++;
+    e.accounts.add(s.account_id);
+    if (s.period_start < e.first) e.first = s.period_start;
+    if (s.period_end > e.last) e.last = s.period_end;
+  }
+
+  const card = (i, e, fy) => h('a', { class: 'inst', href: `#/i/${i.id}/fy/${fy}` },
+    logo(i, false),
+    h('div', null,
+      h('h2', null, i.name),
+      h('p', { class: 'meta' },
+        h('span', null, `${e.accounts.size} ${e.accounts.size === 1 ? 'account' : 'accounts'}`),
+        h('span', null, `${e.count} ${e.count === 1 ? 'statement' : 'statements'}`)),
+      h('p', { class: 'meta' }, h('span', null, `${dFull(e.first)} to ${dFull(e.last)}`))));
+
+  const sections = [...years.keys()].sort((a, b) => b - a).map(fy =>
+    h('section', { class: 'fy' },
+      h('h2', { class: 'fy-h' }, `Tax year ${fyLabel(fy)}`, h('span', { class: 'fy-range' }, fyRange(fy))),
+      h('div', { class: 'grid' }, list.filter(i => years.get(fy).has(i.id)).map(i => card(i, years.get(fy).get(i.id), fy)))));
+
+  /* institutions with nothing imported yet would otherwise vanish */
+  const empty = list.filter(i => ![...years.values()].some(m => m.has(i.id)));
+  if (empty.length) sections.push(h('section', { class: 'fy' },
+    h('h2', { class: 'fy-h' }, 'No statements yet'),
+    h('div', { class: 'grid' }, empty.map(i => h('a', { class: 'inst', href: `#/i/${i.id}` }, logo(i, false), h('div', null, h('h2', null, i.name)))))));
+
   shell(
     h('h1', null, 'Statements'),
-    h('p', { class: 'sub' }, `${totalStmts} statements from ${list.length} institutions. Choose one to see its statements.`),
-    h('div', { class: 'grid' }, list.map(i =>
-      h('a', { class: 'inst', href: `#/i/${i.id}` },
-        logo(i, false),
-        h('div', null,
-          h('h2', null, i.name),
-          h('p', { class: 'meta' },
-            h('span', null, `${i.account_count} ${i.account_count == 1 ? 'account' : 'accounts'}`),
-            h('span', null, `${i.statement_count} statements`)),
-          i.last_period_end ? h('p', { class: 'meta' }, h('span', null, `${dFull(i.first_period_start)} to ${dFull(i.last_period_end)}`)) : null)))));
+    h('p', { class: 'sub' }, `${stmts.length} statements from ${list.length} institutions, grouped by UK tax year (6 April to 5 April). A statement counts in the year it ends in.`),
+    sections);
 }
 
 function totalsBar(rows, inOf, outOf) {
@@ -313,9 +351,10 @@ function totalsBar(rows, inOf, outOf) {
     ...[...byCur].map(([cur, n]) => h('b', { class: n > 0 ? 'in' : n < 0 ? 'out' : 'net zero' }, n === 0 ? money(0, cur) : signed(n, cur))));
 }
 
-async function viewInstitution(id) {
+async function viewInstitution(id, fy) {
   loading();
-  const [inst, stmts] = await Promise.all([api.institution(id), api.statements(id)]);
+  const [inst, allStmts] = await Promise.all([api.institution(id), api.statements(id)]);
+  const stmts = fy == null ? allStmts : allStmts.filter(s => fyOf(s.period_end) === fy);
   const accounts = [...new Map(stmts.map(s => [s.account_id, s])).values()];
   let accountFilter = null;
   let leaveOut = store.get('leaveOutTransfers', false);
@@ -358,7 +397,9 @@ async function viewInstitution(id) {
   shell(
     h('nav', { class: 'crumbs', 'aria-label': 'Breadcrumb' }, h('a', { href: '#/' }, 'Institutions'), h('span', null, '/'), h('span', null, inst.name)),
     h('div', { class: 'head' }, logo(inst, true), h('div', null, h('h1', null, inst.name),
-      h('p', { class: 'meta' }, h('span', null, `${inst.statement_count} statements, newest first`)))),
+      h('p', { class: 'meta' },
+        h('span', null, fy == null ? `${stmts.length} statements, newest first` : `${stmts.length} ${stmts.length === 1 ? 'statement' : 'statements'} in tax year ${fyLabel(fy)}, newest first`),
+        fy == null ? null : h('a', { href: `#/i/${inst.id}`, style: 'color:var(--accent)' }, 'Show all years')))),
     h('div', { class: 'controls' }, chips, toggle),
     listBox);
   paint();
@@ -415,7 +456,7 @@ async function viewStatement(id) {
   shell(
     h('nav', { class: 'crumbs', 'aria-label': 'Breadcrumb' },
       h('a', { href: '#/' }, 'Institutions'), h('span', null, '/'),
-      h('a', { href: `#/i/${inst.id}` }, inst.name), h('span', null, '/'),
+      h('a', { href: `#/i/${inst.id}/fy/${fyOf(sum.period_end)}` }, inst.name), h('span', null, '/'),
       h('span', null, period(sum.period_start, sum.period_end))),
     h('div', { class: 'head' }, logo(inst, true), h('div', null,
       h('h1', null, period(sum.period_start, sum.period_end)),
@@ -445,9 +486,9 @@ async function viewStatement(id) {
 
 /* ---------- entry points ---------- */
 async function open(path) {
-  const m = (path || '').match(/^\/(i|s)\/(\d+)$/);
+  const m = (path || '').match(/^\/(i|s)\/(\d+)(?:\/fy\/(\d{4}))?$/);
   try {
-    if (m && m[1] === 'i') await viewInstitution(Number(m[2]));
+    if (m && m[1] === 'i') await viewInstitution(Number(m[2]), m[3] ? Number(m[3]) : null);
     else if (m && m[1] === 's') await viewStatement(Number(m[2]));
     else await viewHome();
   } catch (err) { failure(err, () => open(path)); }
@@ -484,6 +525,7 @@ function makeDemoApi() {
   const wait = v => new Promise(r => setTimeout(() => r(v), 60));
   return {
     institutions: () => wait(institutions),
+    allStatements: () => wait(data.map(d => d.sum)),
     institution: id => wait(institutions.find(i => i.id === id)),
     statements: id => wait(data.filter(d => d.sum.institution_id === id).map(d => d.sum).sort((a, b) => b.period_end.localeCompare(a.period_end))),
     statement: id => wait(data.find(d => d.sum.statement_id === id).sum),
