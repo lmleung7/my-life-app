@@ -339,7 +339,7 @@ async function viewHome() {
   shell(
     h('h1', null, 'Statements'),
     h('p', { class: 'sub' }, `${stmts.length} statements from ${list.length} institutions, grouped by UK tax year (6 April to 5 April). A statement counts in the year it ends in.`),
-    sections);
+    ...sections);
 }
 
 function totalsBar(rows, inOf, outOf) {
